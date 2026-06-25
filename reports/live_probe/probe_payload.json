@@ -1,0 +1,22 @@
+{
+  "instruments": {
+    "ok": false,
+    "count": 0
+  },
+  "announcements": {
+    "ok": true,
+    "count": 1
+  },
+  "candles": {
+    "ok": false,
+    "gap_pct": 1.0
+  },
+  "funding": {
+    "ok": true,
+    "count": 10
+  },
+  "oi": {
+    "ok": true,
+    "count": 10
+  }
+}

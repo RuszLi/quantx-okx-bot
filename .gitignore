@@ -1,0 +1,11 @@
+data/
+**/__pycache__/
+backtest/pycache__/
+.pytest_cache/
+venv/
+.env
+logs/
+opencode.json
+.opencode/
+.codegraph/
+.vscode/

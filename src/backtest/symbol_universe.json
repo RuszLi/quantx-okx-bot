@@ -1,0 +1,39 @@
+{
+  "_comment_purpose": "Phase 0 candidate symbols on Binance USDⓈ-M perp. Loader will skip those with > 5 missing days.",
+  "_comment_exclusions": "BTC/ETH excluded by V2 strategy spec (too efficient, retail dominance too low).",
+  "_comment_renamed_notice": "MATIC was rebranded POL on Binance late-2024; RNDR became RENDER; some tokens may delist mid-window.",
+  "candidates": [
+    "SOLUSDT",
+    "DOGEUSDT",
+    "XRPUSDT",
+    "ADAUSDT",
+    "AVAXUSDT",
+    "LINKUSDT",
+    "POLUSDT",
+    "ARBUSDT",
+    "OPUSDT",
+    "APTUSDT",
+    "SUIUSDT",
+    "INJUSDT",
+    "NEARUSDT",
+    "LDOUSDT",
+    "PEPEUSDT",
+    "WIFUSDT",
+    "FETUSDT",
+    "RENDERUSDT",
+    "TIAUSDT",
+    "SEIUSDT",
+    "ATOMUSDT",
+    "DOTUSDT",
+    "FILUSDT",
+    "BCHUSDT",
+    "LTCUSDT"
+  ],
+  "blacklist_reasons": {
+    "BTCUSDT": "excluded by V2 spec",
+    "ETHUSDT": "excluded by V2 spec"
+  },
+  "min_volume_usdt_24h": 50000000,
+  "min_book_depth_usdt_0_5pct": 50000,
+  "warmup_days": 1
+}

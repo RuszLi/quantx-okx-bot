@@ -1,0 +1,222 @@
+[
+  {
+    "instId": "KIOXIA-USDT-SWAP",
+    "minSz": 0.01,
+    "lotSz": 0.01,
+    "tickSz": 0.01,
+    "ctVal": 1.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "BTC-USD-SWAP",
+    "minSz": 0.1,
+    "lotSz": 0.1,
+    "tickSz": 0.1,
+    "ctVal": 100.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "ETH-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.01,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "SOL-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.01,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "DOGE-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 1e-05,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "XRP-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.0001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "SUI-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.0001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "BCH-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.1,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "ADA-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.0001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "AVAX-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "DOT-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.0001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "ETC-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "FIL-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.0001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "LINK-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "LTC-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.01,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "UNI-USD-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.001,
+    "ctVal": 10.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "BTC-USDT-SWAP",
+    "minSz": 0.01,
+    "lotSz": 0.01,
+    "tickSz": 0.1,
+    "ctVal": 0.01,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "ETH-USDT-SWAP",
+    "minSz": 0.01,
+    "lotSz": 0.01,
+    "tickSz": 0.01,
+    "ctVal": 0.1,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "OKB-USDT-SWAP",
+    "minSz": 1.0,
+    "lotSz": 1.0,
+    "tickSz": 0.01,
+    "ctVal": 0.01,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  },
+  {
+    "instId": "SOL-USDT-SWAP",
+    "minSz": 0.01,
+    "lotSz": 0.01,
+    "tickSz": 0.01,
+    "ctVal": 1.0,
+    "max_leverage": 0.0,
+    "can_open_position": true,
+    "can_place_hard_stop": true,
+    "can_post_only_fill": true
+  }
+]
