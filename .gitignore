@@ -5,6 +5,7 @@ backtest/pycache__/
 venv/
 .env
 logs/
+!docs/logs/
 opencode.json
 .opencode/
 .codegraph/
