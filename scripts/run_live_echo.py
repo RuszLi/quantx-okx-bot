@@ -443,6 +443,13 @@ def startup_check() -> tuple[float, dict]:
     return equity, inst_map
 
 
+def live_strategy_edges(now: datetime | None = None) -> set[str]:
+    current_time = now or datetime.now(timezone.utc)
+    if current_time.weekday() in {5, 6}:
+        return {"C", "D"}
+    return {"C"}
+
+
 def run_once(inst_map: dict, risk_guard: RiskGuard) -> None:
     logger.info("-" * 40)
 
@@ -451,7 +458,11 @@ def run_once(inst_map: dict, risk_guard: RiskGuard) -> None:
         return
 
     equity = get_equity()
-    signals = compute_ensemble_signals(equity=equity, risk_guard=risk_guard)
+    signals = compute_ensemble_signals(
+        equity=equity,
+        risk_guard=risk_guard,
+        strategy_edges=live_strategy_edges(),
+    )
     if signals.empty:
         logger.info("  ensemble 无信号")
         return

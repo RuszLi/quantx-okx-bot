@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone
 
 import pytest
 
@@ -79,3 +80,40 @@ def test_place_market_close_forces_reduce_only(live):
 
         kwargs = mock_api.place_order.call_args.kwargs
         assert kwargs["reduceOnly"] is True
+
+
+def test_live_strategy_edges_excludes_weekend_wick_on_weekdays(live):
+    friday = datetime(2026, 6, 26, 12, tzinfo=timezone.utc)
+
+    edges = live.live_strategy_edges(friday)
+
+    assert edges == {"C"}
+
+
+def test_live_strategy_edges_enables_weekend_wick_on_weekends(live):
+    saturday = datetime(2026, 6, 27, 12, tzinfo=timezone.utc)
+
+    edges = live.live_strategy_edges(saturday)
+
+    assert edges == {"C", "D"}
+
+
+def test_run_once_passes_live_strategy_edges_to_pipeline(live, monkeypatch):
+    calls = []
+    monkeypatch.setattr(live, "get_equity", lambda: 3.5)
+    monkeypatch.setattr(live, "live_strategy_edges", lambda: {"C"})
+
+    def fake_compute_ensemble_signals(**kwargs):
+        calls.append(kwargs)
+        import pandas as pd
+
+        return pd.DataFrame()
+
+    monkeypatch.setattr(live, "compute_ensemble_signals", fake_compute_ensemble_signals)
+
+    risk_guard = MagicMock()
+    risk_guard.is_halted = False
+
+    live.run_once({}, risk_guard)
+
+    assert calls == [{"equity": 3.5, "risk_guard": risk_guard, "strategy_edges": {"C"}}]

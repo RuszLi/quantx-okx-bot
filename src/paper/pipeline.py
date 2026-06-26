@@ -8,6 +8,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Final
 
 import pandas as pd
 
@@ -31,6 +32,7 @@ OKX_INST_IDS = list(SYMBOL_MAP.keys())
 N_HOURS_HISTORY = 96
 _CANDLE_COLS = ["ts", "open", "high", "low", "close", "volume", "quote_volume"]
 _RETRY_SLEEP = [1, 3, 5]
+DEFAULT_STRATEGY_EDGES: Final[frozenset[str]] = frozenset({"C", "D"})
 
 _CLIENT = market_api()
 _VALIDATED = False
@@ -176,6 +178,7 @@ def compute_ensemble_signals(
     inst_ids: list[str] | None = None,
     equity: float = 7.0,
     risk_guard: RiskGuard | None = None,
+    strategy_edges: set[str] | frozenset[str] | None = None,
 ) -> pd.DataFrame:
     validate_symbols()
 
@@ -183,6 +186,7 @@ def compute_ensemble_signals(
         return pd.DataFrame()
 
     targets = inst_ids or OKX_INST_IDS
+    active_edges = DEFAULT_STRATEGY_EDGES if strategy_edges is None else strategy_edges
 
     strategy_c = BetaDecoupleStrategy()
     strategy_d = WeekendWickStrategy()
@@ -198,29 +202,31 @@ def compute_ensemble_signals(
         if candles.empty or len(candles) < 24:
             continue
 
-        md_c = build_c_market_data(candles, btc_rv_pct=btc_rv)
-        if not md_c.empty and len(md_c) >= 5:
-            sigs = strategy_c.compute_signals(md_c)
-            if not sigs.empty:
-                sigs["symbol"] = SYMBOL_MAP[inst_id]
-                sigs["strategy_name"] = "beta_decouple"
-                sigs["edge"] = "C"
-                # 计算信号分数
-                current_price = float(md_c.iloc[-1]["alt_close"])
-                sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
-                signals_c.append(sigs)
+        if "C" in active_edges:
+            md_c = build_c_market_data(candles, btc_rv_pct=btc_rv)
+            if not md_c.empty and len(md_c) >= 5:
+                sigs = strategy_c.compute_signals(md_c)
+                if not sigs.empty:
+                    sigs["symbol"] = SYMBOL_MAP[inst_id]
+                    sigs["strategy_name"] = "beta_decouple"
+                    sigs["edge"] = "C"
+                    # 计算信号分数
+                    current_price = float(md_c.iloc[-1]["alt_close"])
+                    sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
+                    signals_c.append(sigs)
 
-        md_d = build_d_market_data(candles)
-        if not md_d.empty and len(md_d) >= 2:
-            sigs = strategy_d.compute_signals(md_d)
-            if not sigs.empty:
-                sigs["symbol"] = SYMBOL_MAP[inst_id]
-                sigs["strategy_name"] = "weekend_wick"
-                sigs["edge"] = "D"
-                # 计算信号分数
-                current_price = float(md_d.iloc[-1]["close"])
-                sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
-                signals_d.append(sigs)
+        if "D" in active_edges:
+            md_d = build_d_market_data(candles)
+            if not md_d.empty and len(md_d) >= 2:
+                sigs = strategy_d.compute_signals(md_d)
+                if not sigs.empty:
+                    sigs["symbol"] = SYMBOL_MAP[inst_id]
+                    sigs["strategy_name"] = "weekend_wick"
+                    sigs["edge"] = "D"
+                    # 计算信号分数
+                    current_price = float(md_d.iloc[-1]["close"])
+                    sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
+                    signals_d.append(sigs)
 
     all_raw = pd.concat(signals_c + signals_d, ignore_index=True) if (signals_c or signals_d) else pd.DataFrame()
     if all_raw.empty:

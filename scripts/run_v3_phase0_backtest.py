@@ -300,7 +300,7 @@ def simulate_exits(
         entry_fill = entry_price * (1.0 + SLIPPAGE_PER_SIDE * sign)
         exit_fill = exit_price * (1.0 - SLIPPAGE_PER_SIDE * sign)
         raw_price_ret = sign * (exit_fill - entry_fill) / entry_fill
-        fee_cost = FEE_TAKER_PER_SIDE * 2  # 进出场都 taker (post-only 可能 maker,这里保守用 taker)
+        fee_cost = FEE_MAKER_PER_SIDE + FEE_TAKER_PER_SIDE  # 入场 post_only maker + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
         net_price_ret = raw_price_ret - fee_cost
 
         # funding PnL: 如果持仓跨 funding 时刻,累加 funding_rate * 方向
@@ -759,13 +759,14 @@ def save_sensitivity_grid(trades: pd.DataFrame, out_dir: Path, strategy_name: st
 
     rows: list[dict[str, Any]] = []
     base_slippage = SLIPPAGE_PER_SIDE
-    base_fee = FEE_TAKER_PER_SIDE
+    # 分腿基准总费用 = 入场 maker + 出场 taker (与 simulate_exits:303 口径一致),作为 round-trip 总费用做 ±50% 缩放
+    base_fee_total = FEE_MAKER_PER_SIDE + FEE_TAKER_PER_SIDE
 
     for ts_bars in time_stops:
         # 用 TIME 出场的 trade 重新计算 (简化:只调整 fee/slippage,不重模拟 exit)
         for fee_m in fee_multipliers:
             for sl_m in slippage_multipliers:
-                fee = base_fee * fee_m
+                fee_total = base_fee_total * fee_m
                 sl = base_slippage * sl_m
                 # 重新计算 pnl_R
                 t = trades.copy()
@@ -774,7 +775,7 @@ def save_sensitivity_grid(trades: pd.DataFrame, out_dir: Path, strategy_name: st
                 exit_fill = t["exit_price"] * (1.0 - sl * sign_arr)
                 stop_dist = (t["entry_price"] - t["stop_price"]).abs() / t["entry_price"].replace(0, np.nan)
                 raw_ret = sign_arr * (exit_fill - entry_fill) / entry_fill
-                net_ret = raw_ret - fee * 2
+                net_ret = raw_ret - fee_total  # fee_total 已是 round-trip 总费用(入场 maker + 出场 taker)
                 t["pnl_R_new"] = net_ret / stop_dist.replace(0, np.nan) + t.get("funding_pnl_R", 0)
                 t["pnl_R_new"] = t["pnl_R_new"].fillna(0)
 
@@ -877,7 +878,7 @@ def write_strategy_md(strategy_name: str, edge: str, trades: pd.DataFrame, summa
         f"- fee_maker_per_side: {FEE_MAKER_PER_SIDE}",
         f"- slippage_per_side: {SLIPPAGE_PER_SIDE}",
         f"- initial_equity: ${INITIAL_EQUITY}",
-        f"- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)",
+        f"- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)",
         "",
         "## 5. exit_reason 分布",
         "",

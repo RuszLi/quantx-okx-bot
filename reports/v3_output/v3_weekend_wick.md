@@ -1,6 +1,6 @@
 # V3 Strategy D — weekend_wick
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T09:03:29.484849+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T22:27:05.249129+00:00
 
 ## 1. 决策结论
 
@@ -8,10 +8,10 @@
 - **ROBUSTNESS**: `HIGH`
 - **n_trades**: 142
 - **win_rate**: 0.9296
-- **EV(R)**: 1.1644
-- **profit_factor**: 48.2210
+- **EV(R)**: 1.2113
+- **profit_factor**: 56.2137
 - **max_consec_losses**: 1
-- **max_drawdown_pct**: 94.36%
+- **max_drawdown_pct**: 94.74%
 
 ## 2. 数据来源与点时证据
 
@@ -27,8 +27,8 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: 178.8649
-- **fee_slippage_R_total**: 21.6432
+- **price_pnl_R_total**: 181.4765
+- **fee_slippage_R_total**: 17.5851
 - **funding_pnl_R_total**: 0.0000
 
 ## 4. 执行模拟参数
@@ -37,14 +37,14 @@
 - fee_maker_per_side: 0.0002
 - slippage_per_side: 0.0003
 - initial_equity: $7.0
-- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)
+- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
 
 ## 5. exit_reason 分布
 
 | exit_reason | count |
 |:---|:---|
-| TP | 97 |
-| TIME | 44 |
+| TIME | 91 |
+| TP | 50 |
 | SL | 1 |
 
 ## 6. 分组表

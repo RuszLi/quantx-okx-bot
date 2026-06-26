@@ -2,9 +2,9 @@
   "strategy_name": "weekend_wick",
   "n_trades": 142,
   "win_rate": 0.9296,
-  "ev_R": 1.2113,
-  "profit_factor": 56.2137,
-  "max_drawdown_pct": 94.74,
+  "ev_R": 1.2042,
+  "profit_factor": 55.8881,
+  "max_drawdown_pct": 94.83,
   "max_consec_losses": 1,
   "max_consec_wins": 39,
   "trades_per_day_per_symbol": 0.1443,
@@ -13,11 +13,11 @@
   "worst_trade_R": -1.1294,
   "decision": "PASS",
   "exit_reason_breakdown": {
-    "TIME": 91,
-    "TP": 50,
+    "TP": 71,
+    "TIME": 70,
     "SL": 1
   },
   "fee_slippage_R_total": 17.5851,
   "funding_pnl_R_total": 0.0,
-  "price_pnl_R_total": 181.4765
+  "price_pnl_R_total": 180.4621
 }

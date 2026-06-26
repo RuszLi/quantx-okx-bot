@@ -1,32 +1,25 @@
 # V3 Phase 0 Combo Report
 
-> §18.4 横向汇总  |  生成时间: 2026-06-26T09:04:18.240276+00:00
+> §18.4 横向汇总  |  生成时间: 2026-06-26T22:27:05.251154+00:00
 
 ## 1. 单 edge 决策一览
 
 | edge | strategy | n_trades | win_rate | ev_R | PF | max_consec_losses | decision |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---|
-| A | listing_fade | 0 | 0.0000 | 0.0000 | 0.0000 | 0 | **ABORT** |
-| B | funding_extreme | 354 | 0.0282 | -0.3401 | 0.0062 | 157 | **ABORT** |
-| C | beta_decouple | 24 | 0.9583 | 0.5908 | 71.9539 | 1 | **PASS** |
-| D | weekend_wick | 142 | 0.9296 | 1.1644 | 48.2210 | 1 | **PASS** |
-| E | pre_funding_unwind | 60 | 0.2167 | -0.1650 | 0.1249 | 8 | **ABORT** |
-| K | pair_mr | 2098 | 0.5129 | -0.3195 | 0.3903 | 19 | **ABORT** |
-| H | oi_velocity | 0 | 0.0000 | 0.0000 | 0.0000 | 0 | **ABORT** |
+| D | weekend_wick | 142 | 0.9296 | 1.2113 | 56.2137 | 1 | **PASS** |
 
 ## 2. §18.4 硬约束达成情况
 
 - **A 或 E 至少 1 条 PASS**: ❌ FAIL
   - A/E PASS 列表: 无
-- **至少 2 条 strategy 单独 PASS**: ✅ PASS
-  - PASS 列表: C:beta_decouple, D:weekend_wick
+- **至少 2 条 strategy 单独 PASS**: ❌ FAIL
+  - PASS 列表: D:weekend_wick
 
 ## 3. Ensemble 候选
 
 通过 §18.4 单 edge 闸门的策略:
 
-- **C (beta_decouple)**: EV=0.5908R, PF=71.9539, n=24
-- **D (weekend_wick)**: EV=1.1644R, PF=48.2210, n=142
+- **D (weekend_wick)**: EV=1.2113R, PF=56.2137, n=142
 
 ## 4. 进入 Day 3 Ensemble 仲裁层的资格
 

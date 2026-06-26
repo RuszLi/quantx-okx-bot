@@ -1,6 +1,6 @@
 # V3 Strategy C — beta_decouple
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T09:03:26.521567+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T15:45:08.998709+00:00
 
 ## 1. 决策结论
 
@@ -8,10 +8,10 @@
 - **ROBUSTNESS**: `HIGH`
 - **n_trades**: 24
 - **win_rate**: 0.9583
-- **EV(R)**: 0.5908
-- **profit_factor**: 71.9539
+- **EV(R)**: 0.6108
+- **profit_factor**: 82.5135
 - **max_consec_losses**: 1
-- **max_drawdown_pct**: 18.56%
+- **max_drawdown_pct**: 18.49%
 
 ## 2. 数据来源与点时证据
 
@@ -28,7 +28,7 @@
 ## 3. PnL 分解 (per-trade R 单位)
 
 - **price_pnl_R_total**: 15.7797
-- **fee_slippage_R_total**: 2.5600
+- **fee_slippage_R_total**: 2.0800
 - **funding_pnl_R_total**: 0.0000
 
 ## 4. 执行模拟参数
@@ -37,7 +37,7 @@
 - fee_maker_per_side: 0.0002
 - slippage_per_side: 0.0003
 - initial_equity: $7.0
-- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)
+- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
 
 ## 5. exit_reason 分布
 

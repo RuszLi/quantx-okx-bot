@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import pandas as pd
+from typing import Final
 
 from .base import StrategyConfig, static_universe
+
+
+# Governance: this floor only removes structurally negative R:R trades.
+# RR_MIN tuning (for example 1.0 vs 1.5) must be confirmed by backtest evidence.
+RR_MIN: Final[float] = 1.5
 
 
 class WeekendWickStrategy:
@@ -43,7 +49,8 @@ class WeekendWickStrategy:
             direction = -1 if entry_price > prev_close else 1
             stop_distance = max(float(row["high"] - row["low"]) * 0.25, entry_price * 0.01)
             stop_price = entry_price + stop_distance if direction < 0 else entry_price - stop_distance
-            target_price = prev_close
+            rr_floor_price = entry_price - (RR_MIN * stop_distance) if direction < 0 else entry_price + (RR_MIN * stop_distance)
+            target_price = min(prev_close, rr_floor_price) if direction < 0 else max(prev_close, rr_floor_price)
             signals.append(
                 {
                     "entry_ts": ts,

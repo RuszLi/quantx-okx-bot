@@ -10,3 +10,4 @@ opencode.json
 .opencode/
 .codegraph/
 .vscode/
+.omo/run-continuation/
