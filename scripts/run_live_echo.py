@@ -100,8 +100,11 @@ def get_instrument_map() -> dict[str, dict]:
     result = public_api().get_instruments(instType="SWAP")
     insts = {}
     for i in result.get("data", []):
+        ct_val = i.get("ctVal", "1")
+        if not ct_val:
+            continue
         insts[i["instId"]] = {
-            "ctVal": float(i.get("ctVal", "1")),
+            "ctVal": float(ct_val),
             "lotSz": float(i.get("lotSz", "1")),
         }
     return insts
@@ -215,8 +218,8 @@ def startup_check() -> tuple[float, dict]:
 
     equity = get_equity()
     logger.info(f"  OKX 账户权益: ${equity:.2f}")
-    if equity < 7.0:
-        logger.error(f"  权益不足 $7 (当前 ${equity:.2f})")
+    if equity < 6.0:
+        logger.error(f"  权益不足 $6 (当前 ${equity:.2f})")
         sys.exit(1)
 
     inst_map = get_instrument_map()
