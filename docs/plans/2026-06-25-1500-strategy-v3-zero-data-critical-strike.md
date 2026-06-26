@@ -832,7 +832,7 @@ class Strategy(Protocol):
 - 每个 strategy 必须有：
   - `tests/test_<strategy>.py` 单元测试（fixture 数据）
   - 通过 `python -m src.backtest.run --strategy <name> --start ... --end ...` 跑出非零 trades
-- ensemble 层有独立测试：信号冲突仲裁（同 bar 多 strategy 都触发时如何排队 → 按 priority A > B > C > D + equity check）
+- ensemble 层有独立测试：信号冲突仲裁（同 bar 多 strategy 都触发时如何排队 → 按 priority 降序 + 同 entry_ts & symbol 去重）
 
 ***
 
@@ -875,7 +875,7 @@ class Strategy(Protocol):
 
 | 任务                    | 验收                                     |
 | --------------------- | -------------------------------------- |
-| T11 ensemble 仲裁层      | 信号冲突时按 A > B > C > D + equity check 排队 |
+| T11 ensemble 仲裁层      | 信号冲突时按 priority 降序 + 同 entry_ts & symbol 去重 |
 | T12 state\_machine 实现 | 4 阶段递进 + 冷却 + DD 熔断                    |
 | T13 Paper runner      | 24 小时纸面跑，比较实时数据与回测信号一致性                |
 | T14 Paper 报告          | `reports/v3_paper.md`，确认 trade 频率、滑点假设 |

@@ -7,7 +7,6 @@ import pandas as pd
 
 @dataclass
 class EnsembleStrategy:
-    min_equity: float = 7.0
     priority: dict[str, int] = field(
         default_factory=lambda: {
             "listing_fade": 100,
@@ -21,7 +20,7 @@ class EnsembleStrategy:
     )
 
     def resolve_conflicts(self, signals: pd.DataFrame, available_equity: float) -> pd.DataFrame:
-        if signals.empty or available_equity < self.min_equity:
+        if signals.empty:
             return pd.DataFrame(columns=signals.columns)
 
         ranked = signals.copy()
