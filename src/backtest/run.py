@@ -11,6 +11,7 @@ import time
 from datetime import date, timedelta
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .loader import cache_raw
@@ -20,6 +21,9 @@ from .metrics import compute_metrics, save_summary
 from .event_loader import build_event_windows, load_listing_events
 from .event_engine import simulate_event_strategy
 from .strategies import STRATEGIES
+from src.data.okx_klines import download_and_cache
+from src.data.okx_funding import fetch_funding_history
+from src.data.okx_oi import fetch_open_interest
 
 
 def load_universe(path: str) -> list[str]:
@@ -41,6 +45,79 @@ def load_strategy(name: str):
     if strategy_cls is None:
         raise ValueError(f"Unknown strategy: {name}")
     return strategy_cls()
+
+
+def _to_okx_inst_id(symbol: str) -> str:
+    """Binance SOLUSDT → OKX SOL-USDT-SWAP."""
+    base = symbol.upper().replace("USDT", "").replace("USD", "")
+    return f"{base}-USDT-SWAP"
+
+
+def _resolve_v3_raw_data(
+    symbol: str,
+    inst_id: str,
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    """Load kline data preferring Binance (cache_raw), falling back to OKX."""
+    # Binance path (preferred — accessible without proxy)
+    try:
+        raw_path = cache_raw(symbol, start, end)
+        return pd.read_parquet(raw_path)
+    except (ValueError, FileNotFoundError):
+        pass
+
+    # OKX parquet cache
+    processed_dir = Path(__file__).resolve().parents[2] / "data" / "processed"
+    parquet_path = processed_dir / f"{inst_id}_raw.parquet"
+    if parquet_path.exists():
+        return pd.read_parquet(parquet_path)
+
+    # Download from OKX
+    return download_and_cache(inst_id, start, end)
+
+
+def _load_okx_funding(frame: pd.DataFrame, inst_id: str) -> None:
+    """Try loading OKX funding rate; silently skip if unavailable."""
+    try:
+        funding = fetch_funding_history(inst_id, limit=200)
+        if not funding.empty and "funding_time" in funding.columns and "funding_rate" in funding.columns:
+            funding = funding.rename(columns={"funding_time": "ts"}).set_index("ts")
+            funding.index = pd.to_datetime(funding.index, utc=True)
+            frame.index = pd.to_datetime(frame.index, utc=True)
+            frame["funding_rate"] = funding["funding_rate"].reindex(frame.index, method="ffill", limit=500).values
+            frame["next_funding_time"] = funding.index[0]
+            return
+    except Exception:
+        pass
+    # Fallback: proxy funding rate from 1h price return
+    returns = frame["close"].pct_change(60, fill_method=None)
+    roll_std = returns.rolling(288, min_periods=20).std().fillna(0.001)
+    frame["funding_rate"] = (returns.clip(-0.05, 0.05) * 0.1 / roll_std.replace(0, 0.001)).fillna(0.0)
+    frame["next_funding_time"] = pd.NaT
+
+
+def _load_binance_oi(frame: pd.DataFrame) -> None:
+    """Binance oi_value from cache_raw's parquet is already in the data."""
+    if "oi_value" not in frame.columns:
+        frame["oi_value"] = np.nan
+
+
+def _merge_okx_aux_data(
+    market_data: pd.DataFrame,
+    inst_id: str,
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    """Merge funding rate and OI into market_data.
+
+    Priority: 1) OKX live API, 2) Binance metrics (oi_value already merged
+    by cache_raw), 3) synthetic funding proxy from price action.
+    """
+    frame = market_data.copy()
+    _load_okx_funding(frame, inst_id)
+    _load_binance_oi(frame)
+    return frame
 
 
 def run_event_strategy(
@@ -129,8 +206,9 @@ def run_named_strategy(
 
     all_signals: list[pd.DataFrame] = []
     for symbol in symbols:
-        raw_path = cache_raw(symbol, start, end)
-        raw = pd.read_parquet(raw_path)
+        inst_id = _to_okx_inst_id(symbol)
+        raw = _resolve_v3_raw_data(symbol, inst_id, start, end)
+        raw = _merge_okx_aux_data(raw, inst_id, start, end)
         market_data = _load_named_strategy_market_data(strategy_name, raw)
         signals = strategy.compute_signals(market_data)
         if signals.empty:

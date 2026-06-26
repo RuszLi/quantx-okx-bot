@@ -164,10 +164,13 @@ def build_raw(symbol: str, start: date, end: date) -> pd.DataFrame:
     master = pd.date_range(k.index.min(), k.index.max(), freq="1min", tz="UTC", name="ts")
     raw = k.reindex(master)
 
-    # ffill missing klines (up to 2 bars)
-    raw = raw.ffill(limit=2)
-    if raw.isnull().any().any():
-        raise ValueError(f"Klines for {symbol} have gaps > 2 bars")
+    # ffill missing klines;Binance 公开数据部分日期缺失 (404),
+    # 放宽到 180 bars (3h) 以容忍日内短缺口;更长缺口 (整天缺失) 仍保留 NaN,
+    # 由下游 strategy 自行处理 (compute_signals 通常 dropna)。
+    raw = raw.ffill(limit=180)
+    # 仅 OHLCV 主列仍 NaN 的整段缺口:直接丢弃这些分钟,不强制填充
+    ohlcv_cols = [c for c in ["open", "high", "low", "close"] if c in raw.columns]
+    raw = raw.dropna(subset=ohlcv_cols)
 
     # Derived columns
     raw["taker_buy_quote"] = raw["taker_buy_quote_volume"].fillna(0.0)

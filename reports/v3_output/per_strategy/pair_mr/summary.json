@@ -1,0 +1,22 @@
+{
+  "strategy_name": "pair_mr",
+  "n_trades": 2098,
+  "win_rate": 0.5129,
+  "ev_R": -0.3195,
+  "profit_factor": 0.3903,
+  "max_drawdown_pct": 99.97,
+  "max_consec_losses": 19,
+  "max_consec_wins": 13,
+  "trades_per_day_per_symbol": 2.1321,
+  "avg_holding_bars": 0.0,
+  "best_trade_R": 0.9643,
+  "worst_trade_R": -1.0806,
+  "decision": "ABORT",
+  "exit_reason_breakdown": {
+    "TP": 1078,
+    "SL": 1020
+  },
+  "fee_slippage_R_total": 163.1877,
+  "funding_pnl_R_total": 0.0,
+  "price_pnl_R_total": -568.2659
+}

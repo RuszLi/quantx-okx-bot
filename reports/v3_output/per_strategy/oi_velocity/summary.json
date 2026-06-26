@@ -1,0 +1,19 @@
+{
+  "strategy_name": "oi_velocity",
+  "n_trades": 0,
+  "win_rate": 0.0,
+  "ev_R": 0.0,
+  "profit_factor": 0.0,
+  "max_drawdown_pct": 0.0,
+  "max_consec_losses": 0,
+  "max_consec_wins": 0,
+  "trades_per_day_per_symbol": 0.0,
+  "avg_holding_bars": 0.0,
+  "best_trade_R": 0.0,
+  "worst_trade_R": 0.0,
+  "decision": "ABORT",
+  "exit_reason_breakdown": {},
+  "fee_slippage_R_total": 0.0,
+  "funding_pnl_R_total": 0.0,
+  "price_pnl_R_total": 0.0
+}

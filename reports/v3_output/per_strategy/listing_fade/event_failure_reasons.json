@@ -1,0 +1,11 @@
+{
+  "total_events": 42,
+  "events_within_7d": 18,
+  "events_with_trades": 0,
+  "failure_reasons": {
+    "older_than_7d_okx_limit": 24,
+    "ValueError": 7,
+    "window_too_short": 11
+  },
+  "note": "OKX 1m klines 公开 API 仅 7 天深度,June 2026 大多数事件无法回测"
+}

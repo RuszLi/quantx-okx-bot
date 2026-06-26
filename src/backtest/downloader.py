@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE = "https://data.binance.vision/data/futures/um/daily"
-PROXY = os.getenv("HTTP_PROXY") or os.getenv("ALL_PROXY") or "http://127.0.0.1:7890"
+PROXY = os.getenv("HTTP_PROXY") or os.getenv("ALL_PROXY") or ""
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data" / "raw"
 
 KINDS: dict[str, callable] = {
@@ -65,7 +65,7 @@ async def run(symbols: list[str], start: date, end: date, kinds: list[str], conc
     tally: dict[str, int] = {"ok": 0, "cached": 0, "404": 0, "err": 0}
     err_samples: list[str] = []
 
-    proxy_kw = {"proxy": PROXY} if PROXY else {}
+    proxy_kw = {"proxy": PROXY} if PROXY.strip() else {}
     async with httpx.AsyncClient(http2=False, **proxy_kw) as client:
         async def task(kind: str, sym: str, d: date) -> None:
             async with sem:

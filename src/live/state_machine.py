@@ -11,9 +11,19 @@ class CriticalStrikeStateMachine:
     state: str = "audit-revision"
     equity: float = field(init=False)
     consecutive_losses: int = 0
+    max_consecutive_losses_for_cooldown: int = 3
+    cooldown_minutes: int = 30
     cooldown_until: pd.Timestamp | None = None
     audited: bool = False
     research_approved: bool = False
+
+    VALID_STATES = [
+        "audit-revision",
+        "approved-for-research",
+        "paper-live",
+        "approved-for-gated-live",
+        "halted",
+    ]
 
     def __post_init__(self) -> None:
         self.equity = float(self.initial_equity)
@@ -21,13 +31,20 @@ class CriticalStrikeStateMachine:
     def mark_audited(self) -> None:
         self.audited = True
 
-    def mark_research_approved(self) -> None:
+    def mark_approved_for_research(self) -> None:
         self.research_approved = True
-        if self.audited:
+        if self.audited and self.state == "audit-revision":
             self.state = "approved-for-research"
+
+    def mark_paper_live(self) -> None:
+        if self.state in ("audit-revision", "approved-for-research"):
+            self.state = "paper-live"
 
     def can_enter_live(self) -> bool:
         return self.state == "approved-for-gated-live" and self.cooldown_until is None
+
+    def can_run_paper(self) -> bool:
+        return self.state in ("approved-for-research", "paper-live", "approved-for-gated-live")
 
     def record_trade_result(self, pnl_r: float, timestamp: pd.Timestamp) -> None:
         if pnl_r >= 0:
@@ -38,5 +55,5 @@ class CriticalStrikeStateMachine:
         if pnl_r >= 3.0 and self.state == "approved-for-research":
             self.state = "approved-for-gated-live"
 
-        if self.consecutive_losses >= 2:
-            self.cooldown_until = timestamp + pd.Timedelta(minutes=30)
+        if self.consecutive_losses >= self.max_consecutive_losses_for_cooldown:
+            self.cooldown_until = timestamp + pd.Timedelta(minutes=self.cooldown_minutes)

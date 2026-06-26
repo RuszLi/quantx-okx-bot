@@ -33,8 +33,8 @@ class PreFundingUnwindStrategy:
 
         frame = market_data.copy()
         funding_history = frame["funding_rate"].shift(1)
-        frame["funding_mean"] = funding_history.rolling(5, min_periods=5).mean()
-        frame["funding_std"] = funding_history.rolling(5, min_periods=5).std(ddof=0)
+        frame["funding_mean"] = funding_history.rolling(100, min_periods=50).mean()
+        frame["funding_std"] = funding_history.rolling(100, min_periods=50).std(ddof=0)
         frame["funding_z"] = (frame["funding_rate"] - frame["funding_mean"]) / frame["funding_std"].replace(0, pd.NA)
         frame["oi_ratio"] = frame["oi_value"] / frame["quote_volume"].replace(0, pd.NA)
         oi_history = frame["oi_ratio"].shift(1)

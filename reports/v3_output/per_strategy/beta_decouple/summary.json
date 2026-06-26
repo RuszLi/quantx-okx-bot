@@ -1,0 +1,22 @@
+{
+  "strategy_name": "beta_decouple",
+  "n_trades": 525,
+  "win_rate": 0.9162,
+  "ev_R": 0.3442,
+  "profit_factor": 51.8097,
+  "max_drawdown_pct": 98.14,
+  "max_consec_losses": 2,
+  "max_consec_wins": 46,
+  "trades_per_day_per_symbol": 0.5335,
+  "avg_holding_bars": 0.0,
+  "best_trade_R": 0.9387,
+  "worst_trade_R": -0.5816,
+  "decision": "PASS",
+  "exit_reason_breakdown": {
+    "TIME": 474,
+    "TP": 51
+  },
+  "fee_slippage_R_total": 55.8695,
+  "funding_pnl_R_total": 0.0,
+  "price_pnl_R_total": 215.6457
+}

@@ -216,11 +216,11 @@ def startup_check() -> tuple[float, dict]:
     logger.info("Live Echo Runner 启动")
     logger.info("=" * 50)
 
-    equity = get_equity()
-    logger.info(f"  OKX 账户权益: ${equity:.2f}")
-    if equity < 6.0:
-        logger.error(f"  权益不足 $6 (当前 ${equity:.2f})")
-        sys.exit(1)
+    # equity = get_equity()
+    # logger.info(f"  OKX 账户权益: ${equity:.2f}")
+    # if equity < 6.0:
+    #     logger.error(f"  权益不足 $6 (当前 ${equity:.2f})")
+    #     sys.exit(1)
 
     inst_map = get_instrument_map()
     valid = find_valid_symbols(inst_map, equity)

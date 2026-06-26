@@ -4,45 +4,25 @@ import argparse
 import json
 from pathlib import Path
 from typing import Callable
-import urllib.parse
-import urllib.request
 
 import pandas as pd
 
 from src.data.okx_announcements import fetch_announcements
 from src.data.okx_funding import fetch_funding_history
 from src.data.okx_oi import fetch_open_interest
-
-
-OKX_BASE_URL = "https://www.okx.com"
-
-
-def _http_get_json(path: str, params: dict[str, object] | None = None, timeout: float = 15.0) -> dict[str, object]:
-    query = urllib.parse.urlencode(params or {})
-    url = f"{OKX_BASE_URL}{path}"
-    if query:
-        url = f"{url}?{query}"
-
-    request = urllib.request.Request(
-        url,
-        headers={"User-Agent": "okx-bot/1.0", "Accept": "application/json"},
-        method="GET",
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+from src.okx_sdk import market_api, public_api
 
 
 def fetch_public_instruments(inst_type: str = "SWAP") -> list[dict[str, object]]:
-    payload = _http_get_json("/api/v5/public/instruments", params={"instType": inst_type})
-    return list(payload.get("data") or [])
+    client = public_api()
+    result = client.get_instruments(instType=inst_type)
+    return list(result.get("data") or [])
 
 
 def fetch_public_candles(inst_id: str, limit: int = 10) -> pd.DataFrame:
-    payload = _http_get_json(
-        "/api/v5/market/candles",
-        params={"instId": inst_id, "bar": "1m", "limit": limit},
-    )
-    rows = payload.get("data") or []
+    client = market_api()
+    result = client.get_candlesticks(instId=inst_id, bar="1m", limit=str(limit))
+    rows = result.get("data") or []
     if not rows:
         return pd.DataFrame()
     frame = pd.DataFrame(rows, columns=["ts", "open", "high", "low", "close", "vol", "volCcy", "volCcyQuote", "confirm"])

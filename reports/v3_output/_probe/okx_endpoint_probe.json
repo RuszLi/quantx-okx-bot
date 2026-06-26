@@ -1,0 +1,421 @@
+{
+  "instruments": {
+    "endpoint": "/api/v5/public/instruments",
+    "url": "https://www.okx.com/api/v5/public/instruments?instType=SWAP",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.602,
+    "count": 400,
+    "sample_fields": [
+      "alias",
+      "auctionEndTime",
+      "baseCcy",
+      "category",
+      "contTdSwTime",
+      "ctMult",
+      "ctType",
+      "ctVal",
+      "ctValCcy",
+      "expTime",
+      "freq",
+      "futureSettlement",
+      "groupId",
+      "instCategory",
+      "instFamily",
+      "instId",
+      "instIdCode",
+      "instType",
+      "lever",
+      "listTime",
+      "longPosRemainingQuota",
+      "lotSz",
+      "maxIcebergSz",
+      "maxLmtAmt",
+      "maxLmtSz",
+      "maxMktAmt",
+      "maxMktSz",
+      "maxPlatOICoinLmt",
+      "maxPlatOILmt",
+      "maxStopSz",
+      "maxTriggerSz",
+      "maxTwapSz",
+      "method",
+      "minSz",
+      "openType",
+      "optType",
+      "posLmtAmt",
+      "posLmtPct",
+      "preMktSwTime",
+      "quoteCcy",
+      "ruleType",
+      "seriesId",
+      "settleCcy",
+      "shortPosRemainingQuota",
+      "state",
+      "stk",
+      "tickSz",
+      "tradeQuoteCcyList",
+      "uly",
+      "upcChg"
+    ],
+    "sample": {
+      "instId": "KIOXIA-USDT-SWAP",
+      "instType": "SWAP",
+      "state": "preopen",
+      "settleCcy": "USDT",
+      "ctVal": "1",
+      "ctValCcy": "KIOXIA",
+      "lotSz": "0.01",
+      "minSz": "0.01",
+      "tickSz": "0.01",
+      "lever": "10",
+      "listTime": "1782437400000",
+      "listTimeStr": null
+    },
+    "sample_listTime_iso": "2026-06-26T01:30:00+00:00",
+    "earliest_listTime_iso": "2018-08-28T02:43:23+00:00",
+    "latest_listTime_iso": "2026-06-26T01:30:00+00:00",
+    "state_breakdown": {
+      "preopen": 1,
+      "live": 399
+    }
+  },
+  "announcements_p1": {
+    "endpoint": "/api/v5/support/announcements",
+    "url": "https://www.okx.com/api/v5/support/announcements?annType=announcements-new-listings&page=1&pageSize=100",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.621,
+    "count": 1,
+    "sample_fields": [
+      "details",
+      "totalPage"
+    ],
+    "sample": {
+      "announcementId": null,
+      "title": null,
+      "publishedAt": null,
+      "publishedAtStr": null,
+      "type": null,
+      "subType": null,
+      "url": null
+    },
+    "sample_publishedAt_iso": null,
+    "sample_titles_first_5": [
+      ""
+    ]
+  },
+  "announcements_paginated": {
+    "pages_fetched": 0,
+    "total_count": 1,
+    "earliest_publishedAt_iso": null,
+    "latest_publishedAt_iso": null
+  },
+  "candles_live": {
+    "endpoint": "/api/v5/market/candles",
+    "url": "https://www.okx.com/api/v5/market/candles?instId=BTC-USDT-SWAP&bar=1m&limit=300",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.582,
+    "count": 300,
+    "inst_id": "BTC-USDT-SWAP",
+    "sample_newest": [
+      "1782425040000",
+      "60103.7",
+      "60103.7",
+      "60080.5",
+      "60092.2",
+      "883.05",
+      "8.8305",
+      "530627.73841",
+      "0"
+    ],
+    "sample_oldest": [
+      "1782407100000",
+      "59141.9",
+      "59171.6",
+      "59121.6",
+      "59122",
+      "6003.08",
+      "60.0308",
+      "3550783.31232",
+      "1"
+    ],
+    "newest_ts_iso": "2026-06-25T22:04:00+00:00",
+    "oldest_ts_iso": "2026-06-25T17:05:00+00:00",
+    "window_hours": 4.98
+  },
+  "candles_history_paginated": {
+    "endpoint": "/api/v5/market/history-candles",
+    "inst_id": "BTC-USDT-SWAP",
+    "pages_fetched": 50,
+    "rows_fetched": 5000,
+    "earliest_ts_iso": "2026-06-22T10:45:00+00:00",
+    "latest_ts_iso": "2026-06-25T22:04:00+00:00",
+    "history_depth_days": 3.47
+  },
+  "funding_p1": {
+    "endpoint": "/api/v5/public/funding-rate-history",
+    "url": "https://www.okx.com/api/v5/public/funding-rate-history?instId=BTC-USDT-SWAP&limit=100",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.574,
+    "count": 100,
+    "inst_id": "BTC-USDT-SWAP",
+    "sample_fields": [
+      "formulaType",
+      "fundingRate",
+      "fundingTime",
+      "instId",
+      "instType",
+      "method",
+      "realizedRate"
+    ],
+    "newest": {
+      "formulaType": "withRate",
+      "fundingRate": "-0.0000344282240539",
+      "fundingTime": "1782403200000",
+      "instId": "BTC-USDT-SWAP",
+      "instType": "SWAP",
+      "method": "current_period",
+      "realizedRate": "-0.0000344282240539"
+    },
+    "oldest": {
+      "formulaType": "withRate",
+      "fundingRate": "0.0000040288996575",
+      "fundingTime": "1779552000000",
+      "instId": "BTC-USDT-SWAP",
+      "instType": "SWAP",
+      "method": "current_period",
+      "realizedRate": "0.0000040288996575"
+    },
+    "newest_funding_time_iso": "2026-06-25T16:00:00+00:00",
+    "oldest_funding_time_iso": "2026-05-23T16:00:00+00:00"
+  },
+  "funding_paginated": {
+    "endpoint": "/api/v5/public/funding-rate-history",
+    "inst_id": "BTC-USDT-SWAP",
+    "pages_fetched": 3,
+    "rows_fetched": 284,
+    "earliest_funding_time_iso": "2026-03-23T08:00:00+00:00",
+    "latest_funding_time_iso": "2026-06-25T16:00:00+00:00",
+    "history_depth_days": 94.33
+  },
+  "oi_1H": {
+    "endpoint": "/api/v5/rubik/stat/contracts/open-interest-history",
+    "url": "https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-history?instId=BTC-USDT-SWAP&period=1H&limit=100",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.591,
+    "count": 100,
+    "inst_id": "BTC-USDT-SWAP",
+    "sample_newest": [
+      "1782424800000",
+      "3311447.86000001028",
+      "33114.4786000001028",
+      "1992819387.80442618647316"
+    ],
+    "sample_oldest": [
+      "1782068400000",
+      "3040260.18000001307",
+      "30402.6018000001307",
+      "1949873906.70318838245757"
+    ],
+    "newest_ts_iso": "2026-06-25T22:00:00+00:00",
+    "oldest_ts_iso": "2026-06-21T19:00:00+00:00",
+    "history_depth_days": 4.12
+  },
+  "oi_periods": {
+    "5m": {
+      "url": "https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-history?instId=BTC-USDT-SWAP&period=5m&limit=10",
+      "http_status": 200,
+      "code": "0",
+      "msg": "",
+      "count": 10,
+      "sample_newest": [
+        "1782424800000",
+        "3311447.86000001028",
+        "33114.4786000001028",
+        "1992819387.80442618647316"
+      ],
+      "sample_oldest": [
+        "1782422100000",
+        "3335091.04000000954",
+        "33350.9104000000954",
+        "1986530302.5208056824533"
+      ]
+    },
+    "1H": {
+      "url": "https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-history?instId=BTC-USDT-SWAP&period=1H&limit=10",
+      "http_status": 200,
+      "code": "0",
+      "msg": "",
+      "count": 10,
+      "sample_newest": [
+        "1782424800000",
+        "3311447.86000001028",
+        "33114.4786000001028",
+        "1992819387.80442618647316"
+      ],
+      "sample_oldest": [
+        "1782392400000",
+        "3257335.01000001295",
+        "32573.3501000001295",
+        "1992593258.99225792183875"
+      ]
+    },
+    "1D": {
+      "url": "https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-history?instId=BTC-USDT-SWAP&period=1D&limit=10",
+      "http_status": 200,
+      "code": "0",
+      "msg": "",
+      "count": 10,
+      "sample_newest": [
+        "1782403200000",
+        "3347659.42000001045",
+        "33476.5942000001045",
+        "1994558916.05194622618315"
+      ],
+      "sample_oldest": [
+        "1781625600000",
+        "3074490.6900000115",
+        "30744.906900000115",
+        "2024155510.0659975712665"
+      ]
+    }
+  },
+  "funding_rate_live": {
+    "endpoint": "/api/v5/public/funding-rate",
+    "url": "https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.551,
+    "count": 1,
+    "sample": {
+      "formulaType": "withRate",
+      "fundingRate": "-0.0000046976528934",
+      "fundingTime": "1782432000000",
+      "impactValue": "20000.0000000000000000",
+      "instId": "BTC-USDT-SWAP",
+      "instType": "SWAP",
+      "interestRate": "0.0001000000000000",
+      "maxFundingRate": "0.00375",
+      "method": "current_period",
+      "minFundingRate": "-0.00375",
+      "nextFundingRate": "",
+      "nextFundingTime": "1782460800000",
+      "premium": "-0.0007567429119801",
+      "prevFundingTime": "1782403200000",
+      "settFundingRate": "-0.0000344282240539",
+      "settState": "settled",
+      "ts": "1782425046189"
+    }
+  },
+  "mark_price_live": {
+    "endpoint": "/api/v5/public/mark-price",
+    "url": "https://www.okx.com/api/v5/public/mark-price?instId=BTC-USDT-SWAP",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.569,
+    "count": 1,
+    "sample": {
+      "instId": "BTC-USDT-SWAP",
+      "instType": "SWAP",
+      "markPx": "60102.3",
+      "ts": "1782425099442"
+    }
+  },
+  "ticker_live": {
+    "endpoint": "/api/v5/market/ticker",
+    "url": "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT-SWAP",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.569,
+    "count": 1,
+    "sample": {
+      "instType": "SWAP",
+      "instId": "BTC-USDT-SWAP",
+      "last": "60103",
+      "lastSz": "5.92",
+      "askPx": "60103",
+      "askSz": "712.71",
+      "bidPx": "60102.9",
+      "bidSz": "533.32",
+      "open24h": "61010.7",
+      "high24h": "61929.5",
+      "low24h": "58031.5",
+      "volCcy24h": "181325.668",
+      "vol24h": "18132566.8",
+      "ts": "1782425099366",
+      "sodUtc0": "61050.1",
+      "sodUtc8": "59528.3"
+    }
+  },
+  "books_live": {
+    "endpoint": "/api/v5/market/books",
+    "url": "https://www.okx.com/api/v5/market/books?instId=BTC-USDT-SWAP&sz=5",
+    "http_status": 200,
+    "code": "0",
+    "msg": "",
+    "elapsed_sec": 0.6,
+    "count": 1,
+    "sample_fields": [
+      "asks",
+      "bids",
+      "seqId",
+      "ts"
+    ],
+    "asks_first": [
+      [
+        "60103",
+        "807.7",
+        "0",
+        "32"
+      ],
+      [
+        "60103.1",
+        "2.73",
+        "0",
+        "4"
+      ],
+      [
+        "60103.2",
+        "37.57",
+        "0",
+        "4"
+      ]
+    ],
+    "bids_first": [
+      [
+        "60102.9",
+        "12.37",
+        "0",
+        "10"
+      ],
+      [
+        "60102.8",
+        "0.02",
+        "0",
+        "2"
+      ],
+      [
+        "60102.2",
+        "0.01",
+        "0",
+        "1"
+      ]
+    ],
+    "best_ask": 60103.0,
+    "best_bid": 60102.9,
+    "mid": 60102.95,
+    "spread_bps": 0.02
+  }
+}
