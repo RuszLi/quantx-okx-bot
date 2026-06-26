@@ -100,9 +100,12 @@ scripts/run_live_echo.py
 | 参数 | 值 | 说明 |
 |------|-----|------|
 | 订单类型 | `market` | 市价单，最小实现 |
-| 保证金模式 | `cross` | 全仓，共用 $7 |
-| 持仓模式 | `net` | 净仓，OKX SWAP 默认 |
-| 杠杆 | 1x | $7 不设杠杆，降低爆仓风险 |
+| 保证金模式 | `cross` | 全仓，共用账户权益 |
+| 持仓模式 | `long_short_mode` | 双向持仓，实测账户配置为 `long_short_mode`（开仓须带 `posSide=long/short`） |
+| 交易所杠杆 | **每合约最大值** | 见 §4.5；解耦于真实敞口 |
+| 名义敞口 | **权益 × `NOTIONAL_MULTIPLE`** | 见 §4.5；`NOTIONAL_MULTIPLE=10` |
+
+> **2026-06-26 修订**：原 §4.1 记录"持仓模式 net / 杠杆 1x"，与实测账户配置（`long_short_mode`）及小资金可开仓约束冲突。持仓模式修订见复盘文档偏差 1；杠杆与仓位计算修订见 §4.5。
 
 ### 4.2 开仓
 
@@ -134,16 +137,57 @@ trade_api().place_order(
 
 ### 4.4 仓位大小计算
 
+仓位大小由**目标名义敞口**驱动，且必须考虑当前价格（单张名义 = `ctVal × price`）：
+
 ```python
 # 获取合约信息
-ctVal = float(instrument["ctVal"])   # 合约面值（USDT）
-lotSz = float(instrument["lotSz"])   # 最小下单量
-max_notional = equity * leverage      # 最大名义本金
-sz = int(max_notional / ctVal)
-sz = max(sz, int(lotSz))             # 不低于最小 lot
+ct_val = float(instrument["ctVal"])   # 合约面值（基础币数量）
+lot_sz = float(instrument["lotSz"])   # 最小下单步长
+min_sz = float(instrument["minSz"])   # 最小下单量
+
+target_notional = equity * NOTIONAL_MULTIPLE   # 目标名义敞口（USDT）
+raw_sz = target_notional / (ct_val * price)     # 价格感知
+sz = floor(raw_sz / lot_sz) * lot_sz            # 向下对齐到 lotSz 网格
+# sz < min_sz 则跳过该合约
 ```
 
-若 `sz < lotSz`，则该合约跳过（$7 不足以交易）。
+若 `sz < minSz`，则该合约跳过（资金不足以达到最小下单量）。
+
+> **2026-06-26 修订（关键）**：原实现 `sz = int(max_notional / ctVal)` **忽略价格**，导致同一 `sz` 在不同币种代表的真实敞口相差悬殊（如 SOL `sz=2` ≈ $137，SUI `sz=2` ≈ $1.35）。在 1x + $3.66 权益下，高价合约名义远超权益，OKX 报 `51008 Insufficient USDT margin`。同时 `int(lotSz)` 会把 SOL 的 `lotSz=0.01` 截断为 0。本次改为价格感知 + lotSz 网格对齐，见 §4.5。
+
+### 4.5 杠杆与名义敞口治理（不可漂移）
+
+本运行器将**两个独立概念**显式解耦，禁止再用单一常量同时表达二者：
+
+| 概念 | 取值 | 控制变量 | 作用 |
+|------|------|---------|------|
+| 交易所杠杆 | 每个合约 `instruments.lever` 字段的**最大值**（如 SOL=100x，多数=50x） | `setup_leverage` 按合约设置 | 降低保证金占用，让小资金能开出仓位 |
+| 真实名义敞口 | 权益 × `NOTIONAL_MULTIPLE`（当前 `=10`） | `compute_sz` | 控制实际风险敞口 |
+
+**决策依据：**
+
+- 账户权益极小（~$3.66）。若交易所杠杆设为 1x，高价合约（SOL/AVAX/LINK）的单笔最小名义即超过权益，保证金不足无法开仓。
+- 将交易所杠杆设为合约最大值后，保证金占用降到几美分级别，所有目标合约均可开仓；真实敞口仍由 `NOTIONAL_MULTIPLE` 独立、统一地约束。
+- `NOTIONAL_MULTIPLE=10`：每笔目标名义 ≈ 权益 × 10（当前 ≈ $35），保证金占用 $0.35–0.70/笔，远低于权益。
+
+**禁止漂移：** 不得退回 `MAX_LEVERAGE=1` 这种"杠杆=仓位倍数"的单常量模型。修改 `NOTIONAL_MULTIPLE` 即修改真实风险敞口，须同步更新本节并记录依据。代码常量与注释见 `scripts/run_live_echo.py` 顶部 `NOTIONAL_MULTIPLE`。
+
+### 4.6 同时持仓上限（集中而非分散）
+
+| 概念 | 取值 | 控制变量 | 作用 |
+|------|------|---------|------|
+| 同时持仓数 | `MAX_CONCURRENT_POSITIONS`（当前 `=2`） | `execute_entries` 按 `score` 降序取 top-N，已有持仓计入名额 | 集中下注，避免手续费与相关性侵蚀小资金 |
+
+**决策依据（目标：小资金快速复利，非风控视角）：**
+
+- **手续费侵蚀**：OKX taker ≈ 0.05%，一次 round-trip（开 + SL/TP 平）≈ 名义 × 0.1%。$35 名义 × 多仓，全开 16 仓单轮手续费 ≈ $0.56 ≈ 总资金 15%；集中 1–2 仓则 ≈ 1–2%。这是决定性因素。
+- **相关性使"分散"失效**：SOL/AVAX/LINK/OP/INJ/SUI 等高度随 BTC 同向。16 个同向 alt 仓位不是 16 个独立下注，而是 1 个 beta 下注付 16 倍手续费；逆行时全部同时亏损、共用同一 cross 保证金池，反而更易一起爆仓。
+- **保证金名额**：每仓需 ~$0.35–0.70 保证金，$3.66 权益无法支撑全开，多余信号必然报 `51008`。
+- **取舍**：top-2 若恰为一多一空，相关 beta 部分对冲，接近市场中性配对；纯同向 top-N 仅是手续费倍增的 beta。N=2 在"集中"与"保留一次对冲可能"间取平衡。
+
+**信号排序**：`compute_ensemble_signals` 已产出 `score`（z-score 极端度 + R:R + 紧止损）。注意 `resolve_conflicts` 会按 `entry_ts/priority` 重排，故 `execute_entries` 取 top-N 前须显式按 `score` 降序还原。
+
+**禁止漂移**：不得回退到"每个信号都开仓"的无上限模型。修改 `MAX_CONCURRENT_POSITIONS` 须同步更新本节并记录依据。代码常量与注释见 `scripts/run_live_echo.py` 顶部 `MAX_CONCURRENT_POSITIONS`。
 
 ---
 

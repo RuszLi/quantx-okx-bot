@@ -47,7 +47,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("live_echo")
 
-MAX_LEVERAGE = 1
+# 治理：仓位名义价值 = 账户权益 × NOTIONAL_MULTIPLE（真实敞口的唯一风险旋钮）。
+# 交易所杠杆与此解耦——每个合约的交易所杠杆统一设为该合约支持的最大值，
+# 仅为降低保证金占用、让小资金也能开出仓位；实际敞口由 NOTIONAL_MULTIPLE 控制。
+# 决策记录见 docs/design/2026-06-26-live-echo-runner.md §4。禁止漂移回 MAX_LEVERAGE=1。
+NOTIONAL_MULTIPLE = 10
+
+# 治理：同时持仓上限。小资金快速复利目标——集中而非分散。
+# 每轮按信号 score 降序取 top-N（已有持仓计入名额），其余信号跳过。
+# 理由：相关性极高的同向 alt 仓位并非分散，而是 N 倍手续费的同一 beta 下注；
+# 单笔 round-trip 手续费≈名义×0.1%，多开会把 $3 级别本金快速磨光。
+# 决策记录见 docs/design/2026-06-26-live-echo-runner.md §4.6。
+MAX_CONCURRENT_POSITIONS = 2
+
+
+def fmt_sz(sz: float) -> str:
+    """将下单张数格式化为 OKX 接受的字符串（去除多余末尾零）."""
+    s = f"{sz:.8f}".rstrip("0").rstrip(".")
+    return s or "0"
 
 
 def load_state() -> dict:
@@ -100,7 +117,7 @@ def get_equity() -> float:
 
 
 def get_instrument_map() -> dict[str, dict]:
-    """返回 {instId: {ctVal, lotSz, ctMult}}."""
+    """返回 {instId: {ctVal, lotSz, minSz, ctMult, maxLever}}."""
     result = account_api().get_instruments(instType="SWAP")
     insts = {}
     for i in result.get("data", []):
@@ -110,7 +127,9 @@ def get_instrument_map() -> dict[str, dict]:
         insts[i["instId"]] = {
             "ctVal": float(ct_val),
             "lotSz": float(i.get("lotSz", "1")),
+            "minSz": float(i.get("minSz", i.get("lotSz", "1"))),
             "ctMult": float(i.get("ctMult", "1")),
+            "maxLever": int(float(i.get("lever", "1"))),
         }
     return insts
 
@@ -125,35 +144,48 @@ def get_ticker_prices() -> dict[str, float]:
     return prices
 
 
-def compute_sz(inst_info: dict, equity: float) -> int:
-    """按 MAX_LEVERAGE 计算开仓张数，不考虑当前价格."""
-    max_notional = equity * MAX_LEVERAGE
+def compute_sz(inst_info: dict, equity: float, price: float) -> float:
+    """按目标名义价值计算开仓张数。
+
+    名义价值 = equity × NOTIONAL_MULTIPLE；单张名义 = ctVal × price。
+    结果向下对齐到 lotSz 网格，且不低于 minSz；不足 minSz 则返回 0（跳过该合约）。
+    """
+    if price <= 0:
+        return 0.0
     ct_val = inst_info["ctVal"]
-    lot_sz = int(inst_info.get("lotSz", 1))
-    sz = int(max_notional / ct_val)
-    if sz < lot_sz:
-        return 0
+    lot_sz = inst_info.get("lotSz", 1.0)
+    min_sz = inst_info.get("minSz", lot_sz)
+    target_notional = equity * NOTIONAL_MULTIPLE
+    raw_sz = target_notional / (ct_val * price)
+    # 向下对齐到 lotSz 网格
+    sz = (int(raw_sz / lot_sz)) * lot_sz if lot_sz > 0 else raw_sz
+    if sz < min_sz:
+        return 0.0
     return sz
 
 
-def find_valid_symbols(inst_map: dict, equity: float) -> set[str]:
+def find_valid_symbols(inst_map: dict, equity: float, prices: dict[str, float]) -> set[str]:
     valid = set()
     for inst_id in OKX_INST_IDS:
         info = inst_map.get(inst_id)
         if info is None:
             continue
-        if compute_sz(info, equity) > 0:
+        price = prices.get(inst_id, 0.0)
+        if compute_sz(info, equity, price) > 0:
             valid.add(inst_id)
     return valid
 
 
 def setup_leverage(inst_map: dict[str, dict], valid_symbols: set[str]) -> None:
-    """设置交易所杠杆上限为 MAX_LEVERAGE; 实际仓位由 compute_sz 独立控制."""
-    lev = MAX_LEVERAGE
+    """将每个合约的交易所杠杆设为该合约支持的最大值（降低保证金占用）。
+
+    实际开仓敞口由 compute_sz 按 NOTIONAL_MULTIPLE 独立控制，与此处杠杆解耦。
+    """
     for inst_id in valid_symbols:
         info = inst_map.get(inst_id)
         if not info:
             continue
+        lev = info.get("maxLever", 1)
         try:
             result = account_api().set_leverage(
                 instId=inst_id,
@@ -169,32 +201,34 @@ def setup_leverage(inst_map: dict[str, dict], valid_symbols: set[str]) -> None:
             logger.warning(f"  {inst_id}: 设置杠杆异常: {e}")
 
 
-def place_market_entry(inst_id: str, side: str, sz: int, pos_side: str) -> bool:
-    logger.info(f"  开仓: {inst_id} {side} sz={sz} posSide={pos_side}")
+def place_market_entry(inst_id: str, side: str, sz: float, pos_side: str) -> str | None:
+    """市价开仓；成功返回 ordId，失败返回 None。"""
+    logger.info(f"  开仓: {inst_id} {side} sz={fmt_sz(sz)} posSide={pos_side}")
     result = trade_api().place_order(
         instId=inst_id,
         tdMode="cross",
         side=side,
         posSide=pos_side,
         ordType="market",
-        sz=str(sz),
+        sz=fmt_sz(sz),
     )
     if result.get("code") == "0":
-        logger.info(f"  开仓成功: ordId={result.get('data', [{}])[0].get('ordId', '?')}")
-        return True
+        ord_id = result.get("data", [{}])[0].get("ordId", "") or ""
+        logger.info(f"  开仓成功: ordId={ord_id or '?'}")
+        return ord_id or None
     logger.warning(f"  开仓失败: {result.get('msg', '')} (full={result})")
-    return False
+    return None
 
 
-def place_market_close(inst_id: str, side: str, sz: int, pos_side: str) -> bool:
-    logger.info(f"  平仓: {inst_id} {side} sz={sz} posSide={pos_side}")
+def place_market_close(inst_id: str, side: str, sz: float, pos_side: str) -> bool:
+    logger.info(f"  平仓: {inst_id} {side} sz={fmt_sz(sz)} posSide={pos_side}")
     result = trade_api().place_order(
         instId=inst_id,
         tdMode="cross",
         side=side,
         posSide=pos_side,
         ordType="market",
-        sz=str(sz),
+        sz=fmt_sz(sz),
         reduceOnly=True,
     )
     if result.get("code") == "0":
@@ -204,11 +238,22 @@ def place_market_close(inst_id: str, side: str, sz: int, pos_side: str) -> bool:
     return False
 
 
-def get_latest_fill_px(inst_id: str) -> float | None:
-    """获取指定合约最新成交价格."""
-    result = trade_api().get_fills(instType="SWAP", instId=inst_id, limit="1")
-    if result.get("code") == "0" and result.get("data"):
-        return float(result["data"][0].get("fillPx", "0"))
+def get_fill_px(inst_id: str, ord_id: str, retries: int = 5, delay: float = 0.3) -> float | None:
+    """按 ordId 查询订单成交均价 avgPx，带重试。
+
+    市价单成交后，订单记录的 avgPx 是权威成交价；直接查 /trade/fills 常因
+    撮合结果尚未入索引而返回空。这里按 ordId 轮询订单详情，避免该竞态。
+    """
+    if not ord_id:
+        return None
+    for attempt in range(retries):
+        result = trade_api().get_order(instId=inst_id, ordId=ord_id)
+        if result.get("code") == "0" and result.get("data"):
+            avg_px = result["data"][0].get("avgPx", "")
+            if avg_px and float(avg_px) > 0:
+                return float(avg_px)
+        if attempt < retries - 1:
+            time.sleep(delay)
     return None
 
 
@@ -216,7 +261,7 @@ def attach_sltp_via_algo_order(
     inst_id: str,
     side: str,
     pos_side: str,
-    sz: int,
+    sz: float,
     fill_px: float,
     stop_price: float,
     target_price: float,
@@ -242,7 +287,8 @@ def attach_sltp_via_algo_order(
         tdMode="cross",
         side=close_side,
         posSide=pos_side,
-        sz=str(sz),
+        ordType="oco",
+        sz=fmt_sz(sz),
         reduceOnly=True,
         slTriggerPx=str(round(stop_price, 4)),
         slOrdPx="-1",
@@ -261,6 +307,7 @@ def execute_entries(
     open_positions: dict,
     inst_map: dict,
     equity: float,
+    prices: dict[str, float],
     risk_guard: RiskGuard,
 ) -> list[dict]:
     state = load_state()
@@ -268,8 +315,21 @@ def execute_entries(
         logger.info("  SL/TP 挂载待完成，跳过新仓")
         return []
 
+    # 同时持仓上限：已有持仓计入名额，剩余名额按 score 降序分配
+    slots = MAX_CONCURRENT_POSITIONS - len(open_positions)
+    if slots <= 0:
+        logger.info(f"  持仓已达上限 {MAX_CONCURRENT_POSITIONS}，跳过开仓")
+        return []
+
+    # resolve_conflicts 会按 entry_ts/priority 重排，这里按 score 降序还原以取 top-N
+    if "score" in signals.columns:
+        signals = signals.sort_values("score", ascending=False)
+
     opened = []
     for _, sig in signals.iterrows():
+        if len(opened) >= slots:
+            logger.info(f"  已开 {len(opened)} 仓，达本轮名额上限 {slots}")
+            break
         symbol = sig.get("symbol", "")
         inst_id = next((k for k, v in SYMBOL_MAP.items() if v == symbol), None)
         if inst_id is None:
@@ -281,7 +341,8 @@ def execute_entries(
         info = inst_map.get(inst_id)
         if info is None:
             continue
-        sz = compute_sz(info, equity)
+        price = prices.get(inst_id, 0.0)
+        sz = compute_sz(info, equity, price)
         if sz <= 0:
             continue
 
@@ -295,14 +356,27 @@ def execute_entries(
         target_px = float(sig.get("target_price", 0))
 
         logger.info(f"  {symbol} ({edge}): dir={signal_dir}, sz={sz} SL={stop_px:.4f} TP={target_px:.4f}")
-        if not place_market_entry(inst_id, side, sz, pos_side):
+
+        # 开仓前用实时价校验 SL/TP 方向：信号 entry_price 取自 1h 收盘价，
+        # 市价成交时价格可能已穿越 TP/SL（均值回归已发生）。此时开仓只会立即
+        # 触发反向校验失败 + 平仓，白付一次 round-trip 手续费——直接跳过。
+        if price > 0:
+            if is_long and not (stop_px < price < target_px):
+                logger.info(f"  {symbol}: 实时价 {price:.4f} 已脱离做多区间 (SL={stop_px:.4f}, TP={target_px:.4f})，跳过")
+                continue
+            if not is_long and not (target_px < price < stop_px):
+                logger.info(f"  {symbol}: 实时价 {price:.4f} 已脱离做空区间 (TP={target_px:.4f}, SL={stop_px:.4f})，跳过")
+                continue
+
+        ord_id = place_market_entry(inst_id, side, sz, pos_side)
+        if ord_id is None:
             continue
 
         state = load_state()
         state["sltp_pending"] = True
         save_state(state)
 
-        fill_px = get_latest_fill_px(inst_id)
+        fill_px = get_fill_px(inst_id, ord_id)
         sltp_ok = False
         if fill_px is not None and fill_px > 0:
             sltp_ok = attach_sltp_via_algo_order(
@@ -359,7 +433,8 @@ def startup_check() -> tuple[float, dict]:
         sys.exit(1)
 
     inst_map = get_instrument_map()
-    valid = find_valid_symbols(inst_map, equity)
+    prices = get_ticker_prices()
+    valid = find_valid_symbols(inst_map, equity, prices)
     logger.info(f"  可交易 symbols: {len(valid)}/{len(OKX_INST_IDS)}")
     if not valid:
         raise RuntimeError("无可交易合约")
@@ -384,7 +459,8 @@ def run_once(inst_map: dict, risk_guard: RiskGuard) -> None:
     positions = get_positions()
     logger.info(f"  权益: ${equity:.2f} | 持仓: {len(positions)} 个")
 
-    opened = execute_entries(signals, positions, inst_map, equity, risk_guard)
+    prices = get_ticker_prices()
+    opened = execute_entries(signals, positions, inst_map, equity, prices, risk_guard)
     if opened:
         append_trades(pd.DataFrame(opened))
 
