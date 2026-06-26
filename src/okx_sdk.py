@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from functools import partial
 
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ load_dotenv()
 
 # ── 凭证读取 ──────────────────────────────────────────
 
-DEFAULT_PROXY = "http://127.0.0.1:7890"
+DEFAULT_PROXY = "socks5h://127.0.0.1:34982"
 
 
 def _proxy() -> str | None:

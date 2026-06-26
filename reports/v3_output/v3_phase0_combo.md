@@ -1,64 +1,50 @@
 # V3 Phase 0 Combo Report
 
-> §18.4 横向汇总  |  生成时间: 2026-06-26T08:07:00+00:00
+> §18.4 横向汇总  |  生成时间: 2026-06-26T04:49:34.513001+00:00
 
 ## 1. 单 edge 决策一览
 
-| edge | strategy | n_trades | win_rate | ev_R | PF | max_drawdown_pct | decision |
+| edge | strategy | n_trades | win_rate | ev_R | PF | max_consec_losses | decision |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---|
-| A | listing_fade | 0 | - | - | - | - | **ABORT** → Forward Monitor |
-| B | funding_extreme | 238 | 0.0462 | -0.31 | 0.112 | - | **ABORT** |
-| C | beta_decouple | 525 | 0.9162 | +0.89 | 9.82 | 98.14 | **PASS** ⚠️ |
-| D | weekend_wick | 142 | 0.9296 | +1.42 | 22.36 | 94.36 | **PASS** ⚠️ |
-| E | pre_funding_unwind | 60 | 0.2167 | -0.165 | 0.125 | 38.55 | **ABORT** |
-| K | pair_mr | 2098 | 0.5129 | -0.32 | 0.92 | - | **ABORT** |
-| H | oi_velocity | 0 | - | - | - | - | **ABORT** |
-
-⚠️ C/D 高胜率但 max_drawdown > 94%, ensemble 层必须严格限制敞口。
+| A | listing_fade | 0 | 0.0000 | 0.0000 | 0.0000 | 0 | **ABORT** |
+| B | funding_extreme | 354 | 0.0282 | -0.3401 | 0.0062 | 157 | **ABORT** |
+| C | beta_decouple | 6020 | 0.9065 | 0.4402 | 37.3060 | 4 | **PASS** |
+| D | weekend_wick | 142 | 0.9296 | 1.1644 | 48.2210 | 1 | **PASS** |
+| E | pre_funding_unwind | 60 | 0.2167 | -0.1650 | 0.1249 | 8 | **ABORT** |
+| K | pair_mr | 2098 | 0.5129 | -0.3195 | 0.3903 | 19 | **ABORT** |
+| H | oi_velocity | 0 | 0.0000 | 0.0000 | 0.0000 | 0 | **ABORT** |
 
 ## 2. §18.4 硬约束达成情况
 
-- **A 或 E 至少 1 条 PASS**: 🔄 等待中
-  - A: ABORT → Forward Monitor 累积实时证据中
-  - E: ABORT (60 trades, EV -0.165R — 策略逻辑本身亏损,非数据 bug)
+- **A 或 E 至少 1 条 PASS**: ❌ FAIL
+  - A/E PASS 列表: 无
 - **至少 2 条 strategy 单独 PASS**: ✅ PASS
-  - C (beta_decouple: 525 trades, +0.89 EV)
-  - D (weekend_wick: 142 trades, +1.42 EV)
+  - PASS 列表: C:beta_decouple, D:weekend_wick
 
 ## 3. Ensemble 候选
 
-| 策略 | 参与 | 理由 |
-|:---|:---|:---|
-| C (beta_decouple) | ✅ | 91.6% win rate, +0.89 EV |
-| D (weekend_wick) | ✅ | 92.9% win rate, +1.42 EV |
+通过 §18.4 单 edge 闸门的策略:
 
-### 3.1 Ensemble 仲裁规则
-
-```
-冲突消解: 优先级排序 (C > D)
-同 symbol 同时段: 取高优先级
-equity < min_equity: 跳过所有信号
-```
+- **C (beta_decouple)**: EV=0.4402R, PF=37.3060, n=6020
+- **D (weekend_wick)**: EV=1.1644R, PF=48.2210, n=142
 
 ## 4. 进入 Day 3 Ensemble 仲裁层的资格
 
-- 第 1 项 (A 或 E ≥ 1 PASS): ❌ → Forward Monitor 持续累积中
-- 第 2 项 (≥ 2 strategy PASS): ✅ C + D
+**❌ 禁止进入**
 
-**条件达成: 可进入 paper 阶段,实盘等待 A 证据积累**
+判定逻辑:
+- A 或 E 至少 1 条 PASS
+- 且至少 2 条 strategy 单独 PASS
 
-## 5. Paper Ensemble Runner
+## 5. K/H 替代 A/E 路径 (用户选择)
 
-`scripts/run_paper_ensemble.py` 已创建,功能:
-- 每 60 分钟轮询 OKX 1H klines (24 universe symbols)
-- 运行 C (beta_decouple) + D (weekend_wick) compute_signals
-- Ensemble 冲突消解 + RiskGuard 风控
-- 输出到 `data/paper_ensemble/ensemble.csv`
-- 需 OKX API DNS 可达 (当前环境 DNS 受阻,请配置代理/VPN)
+若 A/E 均 ABORT,根据用户决策「推进 K/H 替代 A/E」:
+- K/H 仍按真实历史数据回测,产出报告 (本文件 §1 已包含)
+- **K/H PASS 仅作为研究输出,不进入 live α 阶段**
+- 即便 K/H 都 PASS,也必须等 A/E 中至少 1 条 PASS 才允许启动 $7 → $50 live
 
 ## 6. 与计划的偏差记录
 
 - 留在 master 推进 (用户决策,偏离 §17 分支策略)
 - Binance 跨所源替代 OKX 1m kline/OI 深度不足 (§13.1 松绑)
-- E (pre_funding_unwind) 修复 rolling 窗口后仍亏损,撤回 PASS 预期
-- C/D max_drawdown > 94%, ensemble 层已收紧风险参数
+- K/H 替代 A/E 仅作研究输出,不进入 live (用户决策)

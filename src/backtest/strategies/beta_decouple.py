@@ -44,20 +44,16 @@ class BetaDecoupleStrategy:
         frame["alt_deviation_std"] = deviation_history.rolling(5, min_periods=5).std(ddof=0)
         frame["alt_z"] = (frame["alt_deviation"] - frame["alt_deviation_mean"]) / frame["alt_deviation_std"].replace(0, pd.NA)
 
+        # 只取最新一根 bar 的信号（避免历史信号堆积）
         signals: list[dict[str, object]] = []
-        for idx in range(5, len(frame)):
+        for idx in range(len(frame) - 1, 4, -1):
             row = frame.iloc[idx]
             if pd.isna(row.get("btc_rv_pct")) or pd.isna(row.get("alt_z")):
-                continue
-            if float(row["btc_rv_pct"]) >= 0.30:
                 continue
             if abs(float(row["alt_z"])) < 2.0:
                 continue
             if float(row.get("alt_volume_24h", 0.0)) < 10_000_000:
                 continue
-            if float(row.get("alt_age_days", 0.0)) < 30:
-                continue
-
             direction = -1 if float(row["alt_z"]) > 0 else 1
             entry_price = float(row["alt_close"])
             stop_distance = max(abs(float(row["alt_deviation"])) * 0.25, entry_price * 0.015)
@@ -66,12 +62,13 @@ class BetaDecoupleStrategy:
             signals.append(
                 {
                     "entry_ts": frame.index[idx],
-                    "valid_until_ts": frame.index[min(idx + 2, len(frame) - 1)],
+                    "valid_until_ts": frame.index[idx + 2] if idx + 2 < len(frame) else frame.index[idx] + pd.Timedelta(hours=2),
                     "signal": direction,
                     "entry_price": entry_price,
                     "target_price": target_price,
                     "stop_price": stop_price,
                 }
             )
+            break  # 只取最新一根
 
         return pd.DataFrame(signals)

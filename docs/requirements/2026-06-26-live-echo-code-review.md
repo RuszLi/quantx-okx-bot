@@ -2,7 +2,7 @@
 
 ## 目的
 
-对本轮会话（2026-06-26）交付的 Live Echo Runner 全链路进行正式 Code Review。
+对git commit \`d477d23d3312f281e1a0677481825e032cadec8f\` 交付的 Live Echo Runner 全链路进行正式 Code Review。
 涵盖方案设计（设计文档）、代码实现、风险暴露三个层面，发现阻断性问题与可改进
 点，为进入持续实盘运行提供质量门禁。
 
@@ -10,13 +10,13 @@
 
 ### 审查对象
 
-| 文件 | 职责 |
-|------|------|
-| `docs/design/2026-06-26-live-echo-runner.md` | 设计方案 |
-| `docs/plans/2026-06-26-live-echo-implementation.md` | 实施计划 |
-| `src/paper/pipeline.py` | 共享信号管道 |
-| `scripts/run_paper_ensemble.py` | 纸交易运行器（重构版） |
-| `scripts/run_live_echo.py` | 实盘运行器 |
+| 文件                                                  | 职责          |
+| --------------------------------------------------- | ----------- |
+| `docs/design/2026-06-26-live-echo-runner.md`        | 设计方案        |
+| `docs/plans/2026-06-26-live-echo-implementation.md` | 实施计划        |
+| `src/paper/pipeline.py`                             | 共享信号管道      |
+| `scripts/run_paper_ensemble.py`                     | 纸交易运行器（重构版） |
+| `scripts/run_live_echo.py`                          | 实盘运行器\`     |
 
 ### 审查维度
 
@@ -65,11 +65,11 @@
 
 ## 角色与权限
 
-| 角色 | 职责 |
-|------|------|
-| 审查人（Reviewer） | 逐项检查代码，输出审查结论 |
-| 作者（Author） | 解答审查人的 Question，修复 Blocking / Major 问题 |
-| 决策人（Decider） | 基于审查结论决定是否进入持续实盘 |
+| 角色            | 职责                                     |
+| ------------- | -------------------------------------- |
+| 审查人（Reviewer） | 逐项检查代码，输出审查结论                          |
+| 作者（Author）    | 解答审查人的 Question，修复 Blocking / Major 问题 |
+| 决策人（Decider）  | 基于审查结论决定是否进入持续实盘                       |
 
 本轮会话中，三者均为同一人（PM）。
 
@@ -101,3 +101,4 @@
 - [ ] `get_equity()` 使用的 OKX 响应字段在所有可用余额场景下有效
 - [ ] 已发现的问题全部以 `# NOTE:` 或 `# FIXME:` 形式标注或记录在案
 - [ ] 输出审查小结，包含 PASS / PASS-WITH-NOTES / FAIL 结论
+

@@ -6,11 +6,12 @@
 
 ## 代理配置
 
-| 协议 | 代理地址 | 说明 |
-|:-----|:---------|:-----|
-| HTTP 代理 | `http://127.0.0.1:7890` | 明文 HTTP 请求走代理 |
-| SOCKS5 代理 | `socks5://127.0.0.1:7897` | SOCKS5 | 混合代理端口  |
-| HTTPS 代理 | `http://127.0.0.1:7890` | TLS 加密请求复用同一端口 |
+| 协议         | 代理地址                       | 说明                                           |
+| :--------- | :------------------------- | :------------------------------------------- |
+| SOCKS5（推荐） | `socks5h://127.0.0.1:34982` | HTTP/HTTPS 全协议走 SOCKS5，避免 HTTPS CONNECT 隧道问题 |
+| HTTP       | `http://127.0.0.1:7890`    | 仅 HTTP，兼容遗留配置                                |
+| HTTPS       | `https://127.0.0.1:7890`    | 仅 HTTPS，兼容遗留配置                                |
+| 混合       | `http://127.0.0.1:7897`    | 混合端口                               |
 
 ## 适用范围
 
@@ -21,28 +22,24 @@
 
 ## 实现规范
 
-### 1. 默认启用
+### 1. 代理地址解析规则
 
-新建外部请求相关代码时，应**默认启用代理**，而非被动读取环境变量：
+代理地址由 `src/okx_sdk.py` 中的 `_proxy()` 函数统一解析，优先级如下：
 
-```python
-# ✅ 推荐：硬编码默认代理，可在需要时覆盖
-DEFAULT_PROXY = "http://127.0.0.1:7890"
-
-# ❌ 禁止：无默认值、依赖开发者手动设置环境变量
-proxy = os.getenv("HTTP_PROXY") or ""
-```
-
-### 2. 环境变量覆盖（可选）
-
-支持通过环境变量覆盖默认代理，便于 CI/CD 或特殊机器部署：
+| 优先级   | 来源                  |
+| :---- | :------------------ |
+| 1（最高） | 环境变量 `HTTP_PROXY`   |
+| 2     | 环境变量 `HTTPS_PROXY`  |
+| 3（默认） | 硬编码 `DEFAULT_PROXY` |
 
 ```python
-# 优先级：环境变量 > 硬编码默认
-PROXY = os.getenv("HTTP_PROXY") or os.getenv("ALL_PROXY") or "http://127.0.0.1:7890"
+def _proxy() -> str | None:
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or DEFAULT_PROXY
 ```
 
-### 3. 代理开关
+默认值为 `socks5h://127.0.0.1:34982`，SOCKS5 在传输层统一处理 HTTP/HTTPS，避免 HTTP CONNECT 隧道带来的 TLS 握手不稳定问题。可通过环境变量 `HTTP_PROXY` 或 `HTTPS_PROXY` 覆盖为 HTTP 代理。
+
+### 2. 代理开关
 
 对于需要灵活切换的场景，提供显式开关：
 
@@ -55,13 +52,13 @@ def __init__(self, use_proxy: bool = True):
 
 ### 4. 网络库适配示例
 
-| 代理参数 示例 |
-|:------------|
-| **requests** | `requests.get(url, proxies={"http": PROXY, "https": PROXY})` |
-| **httpx** | `httpx.Client(proxy=PROXY)` / `httpx.AsyncClient(proxy=PROXY)` |
-| **aiohttp** | `session.get(url, proxy=PROXY)` |
-| **urllib** | `urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})` |
-| **python-okx SDK** | 通过 `src/okx_sdk.py` 统一注入，无需各模块自行配置 |
+| <br />             | 代理参数 示例                                                        |
+| :----------------- | :------------------------------------------------------------- |
+| **requests**       | `requests.get(url, proxies={"http": PROXY, "https": PROXY})`   |
+| **httpx**          | `httpx.Client(proxy=PROXY)` / `httpx.AsyncClient(proxy=PROXY)` |
+| **aiohttp**        | `session.get(url, proxy=PROXY)`                                |
+| **urllib**         | `urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})` |
+| **python-okx SDK** | 通过 `src/okx_sdk.py` 统一注入，无需各模块自行配置                             |
 
 ## 5. SDK 客户端代理集成
 

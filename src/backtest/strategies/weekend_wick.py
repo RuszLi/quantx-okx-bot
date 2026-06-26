@@ -47,7 +47,7 @@ class WeekendWickStrategy:
             signals.append(
                 {
                     "entry_ts": ts,
-                    "valid_until_ts": market_data.index[min(idx + 1, len(market_data) - 1)],
+                    "valid_until_ts": market_data.index[idx + 1] if idx + 1 < len(market_data) else ts + pd.Timedelta(hours=1),
                     "signal": direction,
                     "entry_price": entry_price,
                     "target_price": target_price,

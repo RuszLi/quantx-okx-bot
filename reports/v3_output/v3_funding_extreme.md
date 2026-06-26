@@ -1,17 +1,17 @@
 # V3 Strategy B — funding_extreme
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-25T22:48:12.550126+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T04:48:41.257196+00:00
 
 ## 1. 决策结论
 
 - **DECISION**: `ABORT`
 - **ROBUSTNESS**: `FAIL`
-- **n_trades**: 238
-- **win_rate**: 0.0462
-- **EV(R)**: -0.3129
-- **profit_factor**: 0.0123
-- **max_consec_losses**: 98
-- **max_drawdown_pct**: 84.92%
+- **n_trades**: 354
+- **win_rate**: 0.0282
+- **EV(R)**: -0.3401
+- **profit_factor**: 0.0062
+- **max_consec_losses**: 157
+- **max_drawdown_pct**: 85.93%
 
 ## 2. 数据来源与点时证据
 
@@ -27,8 +27,8 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: -59.0172
-- **fee_slippage_R_total**: 24.7228
+- **price_pnl_R_total**: -97.6573
+- **fee_slippage_R_total**: 36.3683
 - **funding_pnl_R_total**: 0.0000
 
 ## 4. 执行模拟参数
@@ -43,7 +43,7 @@
 
 | exit_reason | count |
 |:---|:---|
-| TIME | 238 |
+| TIME | 354 |
 
 ## 6. 分组表
 
@@ -55,7 +55,7 @@
 
 ## 7. 敏感性网格
 
-见 `sensitivity_grid.csv` (共 238 笔交易,3x3x3=27 cells)
+见 `sensitivity_grid.csv` (共 354 笔交易,3x3x3=27 cells)
 ROBUSTNESS 评级: `FAIL`
 
 ## 8. 文件清单
