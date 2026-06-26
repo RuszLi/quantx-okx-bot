@@ -172,6 +172,7 @@ SOL 持仓平不掉
 | 7（`get_instrument_map` 数据源） | ✅ 已还原 | 改回 `account_api().get_instruments`，补回 `ctMult`。 |
 | 8（`compute_sz` 签名与公式） | ✅ 已还原 | 签名 `compute_sz(inst_info, equity)`，公式 `equity * MAX_LEVERAGE / ct_val`。 |
 | 9（函数名拼写） | ✅ 已同步 | 计划文档 `2026-06-26-live-echo-implementation.md` 已标注 superseded 并修正函数名。 |
+| 10（check_exits 写死 USDT 金额） | ✅ 已修复 | 删除 `check_exits` 函数及 `STOP_LOSS_USDT`/`TAKE_PROFIT_USDT`/`TIME_STOP_HOURS` 常量，完全依赖交易所 algo 单 + RiskGuard 熔断。 |
 
 ### Paper 与 Live 下单侧残留差异
 
@@ -181,3 +182,25 @@ SOL 持仓平不掉
 - `pipeline.compute_ensemble_signals` 在纸交易与实盘中均支持 `risk_guard` 参数，halt 时返回空 DataFrame。
 
 实盘独有的下单层语义已按 `docs/architecture/okx-sdk-rules.md` §4 约束实现，未来若纸交易扩展为「模拟成交」，应直接复用 `run_live_echo.py` 中的 `place_market_entry` / `place_market_close` / `attach_sltp_via_algo_order` 骨架。
+
+### 偏差 10（严重）：check_exits 使用写死 USDT 金额而非方案设计的 ATR/价格止损
+
+**发现日期：** 2026-06-26（代码审查）
+
+| 维度 | 方案（§2.3/§7） | 实际 |
+|:---|:---|:---|
+| 止损 | 基于 ATR/价格结构（如 `1.5×ATR(4h)`、`破前高×1.02`） | 固定 `-1 USDT` |
+| 止盈 | 基于信号的 `target_price` | 固定 `+3 USDT` |
+| 时间止损 | 因策略而异（15min ~ 24h） | 固定 `8h` |
+| R 单位 | `equity × R_pct`（A=30%, B/C=20%, D=15%, E/H=18%） | 无 R 概念 |
+
+**根因：** `check_exits` 是早期开发阶段的简化实现，后续修复计划专注于下单语义缺陷（Bug-1/Bug-2），未覆盖退出参数对齐。
+
+**后果：**
+1. 退出逻辑与开仓逻辑矛盾：开仓用信号的 `stop_price`/`target_price`（ATR/价格），`check_exits` 用固定金额
+2. 不同合约效果差异巨大：-1 USDT 对 BTC（~$600）和 DOGE（~$1.5）意义完全不同
+3. 与方案设计严重不符
+
+**修复方向：** 删除 `check_exits` 及其常量，完全依赖交易所 algo 单 + RiskGuard 熔断。
+
+**缺陷记录：** [docs/bugs/2026-06-26-check-exits-hardcoded-sltp.md](../bugs/2026-06-26-check-exits-hardcoded-sltp.md)

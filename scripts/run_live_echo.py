@@ -47,9 +47,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("live_echo")
 
-STOP_LOSS_USDT = -1.0
-TAKE_PROFIT_USDT = 3.0
-TIME_STOP_HOURS = 8
 MAX_LEVERAGE = 1
 
 
@@ -259,44 +256,6 @@ def attach_sltp_via_algo_order(
     return False
 
 
-def check_exits(positions: dict[str, dict], risk_guard: RiskGuard) -> list[dict]:
-    closed = []
-    for inst_id, pos in positions.items():
-        upl = pos["upl"]
-        entry_time = datetime.fromtimestamp(pos["cTime"] / 1000, tz=timezone.utc)
-        age_hours = (datetime.now(timezone.utc) - entry_time).total_seconds() / 3600
-
-        reason = None
-        if upl <= STOP_LOSS_USDT:
-            reason = "stop_loss"
-        elif upl >= TAKE_PROFIT_USDT:
-            reason = "take_profit"
-        elif age_hours >= TIME_STOP_HOURS:
-            reason = "time_stop"
-
-        if reason is None:
-            continue
-
-        is_long = pos["pos"] > 0
-        side = "sell" if is_long else "buy"
-        pos_side = "long" if is_long else "short"
-        sz = int(abs(pos["pos"]))
-        logger.info(f"  退出: {inst_id} {reason} upl={upl:.2f} age={age_hours:.1f}h")
-        if place_market_close(inst_id, side, sz, pos_side=pos_side):
-            equity = get_equity()
-            risk_guard.update_equity(equity, trade_pnl_r=upl)
-            closed.append({
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "symbol": SYMBOL_MAP.get(inst_id, inst_id),
-                "action": f"exit_{'long' if pos['pos'] > 0 else 'short'}",
-                "price": pos["avgPx"],
-                "sz": sz,
-                "pnl": round(upl, 4),
-                "reason": reason,
-            })
-    return closed
-
-
 def execute_entries(
     signals: pd.DataFrame,
     open_positions: dict,
@@ -425,24 +384,18 @@ def run_once(inst_map: dict, risk_guard: RiskGuard) -> None:
     positions = get_positions()
     logger.info(f"  权益: ${equity:.2f} | 持仓: {len(positions)} 个")
 
-    closed = check_exits(positions, risk_guard)
-    if closed:
-        append_trades(pd.DataFrame(closed))
-
     opened = execute_entries(signals, positions, inst_map, equity, risk_guard)
     if opened:
         append_trades(pd.DataFrame(opened))
 
     state = load_state()
     state["cycle_count"] += 1
-    state["total_trades"] += len(closed) + len(opened)
+    state["total_trades"] += len(opened)
     if equity > state.get("peak_equity", 0):
         state["peak_equity"] = round(equity, 4)
     state["last_run"] = datetime.now(timezone.utc).isoformat()
     save_state(state)
 
-    for c in closed:
-        logger.info(f"  EXIT {c['symbol']} {c['action']} pnl={c['pnl']} ({c['reason']})")
     for o in opened:
         logger.info(f"  ENTER {o['symbol']} {o['action']} ({o['reason']})")
 
