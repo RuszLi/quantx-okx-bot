@@ -1,7 +1,10 @@
 # Live Echo Runner 实现计划
 
-> **状态：** 已完成 (2026-06-26)
+> **状态：** 已完成 (2026-06-26)，已被修复计划 supersede
 > **commit:** 1b99b3a
+> **Superseded by:** [docs/plans/2026-06-26-live-echo-runner-fix.md](./2026-06-26-live-echo-runner-fix.md)
+>
+> ⚠️ 本文档保留原始实现记录，但部分术语与当前代码不一致。请以修复计划 `2026-06-26-live-echo-runner-fix.md` 及实际代码为准。
 
 > **面向 AI 代理的工作者：** 此计划由当前会话内联执行，无需子代理调度。
 
@@ -159,7 +162,7 @@ def append_csv(path: Path, new_rows: pd.DataFrame) -> None:
 
 # ── 完整信号管道 ──────────────────────────────────────
 
-def compute_ensemble_signants(
+def compute_ensemble_signals(
     inst_ids: list[str] | None = None,
     equity: float = 7.0,
 ) -> pd.DataFrame:
@@ -217,7 +220,7 @@ def compute_ensemble_signants(
 - [ ] **步骤 2：运行导入检查**
 
 ```bash
-python -c "from src.paper.pipeline import compute_ensemble_signants, fetch_1h_candles; print('pipeline OK')"
+python -c "from src.paper.pipeline import compute_ensemble_signals, fetch_1h_candles; print('pipeline OK')"
 ```
 
 预期输出：`pipeline OK`
@@ -270,7 +273,7 @@ from src.paper.pipeline import (
     OKX_INST_IDS,
     SYMBOL_MAP,
     append_csv,
-    compute_ensemble_signants,
+    compute_ensemble_signals,
     load_csv,
     validate_symbols,
 )
@@ -316,7 +319,7 @@ def run_once() -> None:
     logger.info(f"[Cycle {state['cycle_count']}] 开始 — {now_iso}")
 
     validate_symbols()
-    result = compute_ensemble_signants()
+    result = compute_ensemble_signals()
 
     if result.empty:
         logger.info("  ensemble 无输出")
@@ -425,7 +428,7 @@ from src.okx_sdk import account_api, trade_api
 from src.paper.pipeline import (
     OKX_INST_IDS,
     SYMBOL_MAP,
-    compute_ensemble_signants,
+    compute_ensemble_signals,
     validate_symbols,
 )
 
@@ -451,7 +454,7 @@ logger = logging.getLogger("live_echo")
 STOP_LOSS_USDT = -0.21
 TAKE_PROFIT_USDT = 0.42
 TIME_STOP_HOURS = 5
-MAX_LEVERAGE = 1
+MAX_LEVERAGE = 1  # 实际仓位控制杠杆；setup_leverage 同步设为同一上限
 
 
 # ── 状态管理 ──────────────────────────────────────────
@@ -550,7 +553,7 @@ def place_market_order(inst_id: str, side: str, sz: int) -> bool:
         instId=inst_id,
         tdMode="cross",
         side=side,
-        posSide="net",
+        posSide="long",  # 账户为 long_short_mode，平仓/开仓需按实际方向传 long/short
         ordType="market",
         sz=str(sz),
     )
@@ -675,7 +678,7 @@ def startup_check() -> tuple[float, dict]:
 def run_once(inst_map: dict, risk_guard: RiskGuard) -> None:
     logger.info("─" * 40)
 
-    signals = compute_ensemble_signants()
+    signals = compute_ensemble_signals()
     if signals.empty:
         logger.info("  ensemble 无信号")
         return

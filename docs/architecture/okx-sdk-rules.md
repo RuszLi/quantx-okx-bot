@@ -80,7 +80,9 @@ SDK 客户端通过 `OKX_FLAG` 环境变量控制交易环境：
 
 ```python
 # src/okx_sdk.py 内部自动从环境变量读取代理
-proxy = os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or None
+# 优先级：HTTP_PROXY > HTTPS_PROXY > DEFAULT_PROXY (socks5://127.0.0.1:7897)
+def _proxy() -> str | None:
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or DEFAULT_PROXY
 ```
 
 ***
@@ -126,30 +128,80 @@ result = await asyncio.to_thread(
 
 ***
 
-## 4. SDK 缺口处理
+## 4. 下单语义约束
+
+### 4.1 双向持仓模式下的 `reduceOnly`
+
+账户 `posMode="long_short_mode"`（双向持仓）模式下：
+
+| 操作 | `reduceOnly` 要求 | 缺省后果 |
+|------|-------------------|----------|
+| 平仓 | **必须传 `True`** | 视为新开反向仓 |
+| 止损/止盈单 | **必须传 `True`** | 视为新开反向仓 |
+| 开仓 | 不传 | — |
+
+> **强制规则**：所有平仓调用（包括 `check_exits` 触发的平仓、SL/TP 触发的平仓）必须携带 `reduceOnly=True`。
+
+### 4.2 SL/TP 挂载与方向校验
+
+**问题**：策略信号直接透传 `stop_price`/`target_price` 到 `slTriggerPx`/`tpTriggerPx`，未按实际成交价做方向校验，触发 `sCode 51053`（触发价方向错误）。
+
+**规则**：
+
+1. **开仓时同步将 SL/TP 提交到交易所**，禁止本地轮询价格被动止损。提交方式二选一：
+   - **方式一（原子）**：主单通过 `attachAlgoOrds` 一次性携带 SL/TP。
+   - **方式二（市价单）**：主单为市价单时，成交后立即调用 `trade_api().get_fills()` 取实际成交价，再用 `place_algo_order` 独立挂 SL/TP；挂成功前须设置 `sltp_pending` 标志位阻止新开仓。
+2. **方向校验**：SL/TP 触发价方向必须与主单方向一致：
+   - **做空**：`slTriggerPx > fill_px`（止损在上方），`tpTriggerPx < fill_px`（止盈在下方）
+   - **做多**：`slTriggerPx < fill_px`（止损在下方），`tpTriggerPx > fill_px`（止盈在上方）
+3. **市价单必须先取成交价再校验**：`fill_px` 来自 `get_fills()`，不得使用信号 `entry_price` 代替。
+
+### 4.3 禁止本地主动止盈止损
+
+**强制规则**：开单时**必须同步**将止盈止损挂载到交易所（通过 `attachAlgoOrds` 或 `place_algo_order`），不得依靠本地轮询价格主动平仓代替 SL/TP。
+
+**理由**：
+- 本地轮询存在延迟，极端行情下可能错过止损价位
+- 本地进程崩溃时，持仓将无保护裸奔
+- 交易所 SL/TP 是服务端撮合，可靠性远高于本地监控
+
+**唯一例外**：`check_exits` 中的**时间止损**（持仓超过 N 小时平仓）属于主动平仓，不在此限制内。
+
+### 4.4 下单函数拆分
+
+| 函数 | 用途 | `reduceOnly` | 可带 SL/TP |
+|------|------|--------------|------------|
+| `place_market_entry()` | 开仓 | 不传 | ✅ 必须同步挂载 |
+| `place_market_close()` | 平仓/止损/止盈 | **强制 `True`** | ❌ 不需要 |
+
+> **禁止**：单个 `place_market_order` 函数同时处理开仓和平仓两种语义，容易误调用。
+
+***
+
+## 5. SDK 缺口处理
 
 当 SDK 未覆盖某个官方 API 端点时，按以下优先级处理：
 
-### 4.1 优先升级 SDK
+### 5.1 优先升级 SDK
 
 ```bash
 pip install --upgrade python-okx
 ```
 
-### 4.2 使用 SDK 内部请求方法
+### 5.2 使用 SDK 内部请求方法
 
 若升级后仍未覆盖，**必须**通过 SDK 客户端的 `_request()` 方法调用，以复用 SDK 的签名、代理、基础 URL 等能力：
 
-### 4.3 禁止行为
+### 5.3 禁止行为
 
 - ❌ 禁止在 SDK 之外自行封装 HTTP 调用
 - ❌ 禁止使用 `urllib.request`、`requests`、`aiohttp` 直接请求 OKX 端点（无论是否携带签名）
 
 ***
 
-## 5. WebSocket 规范
+## 6. WebSocket 规范
 
-### 5.1 公共频道
+### 6.1 公共频道
 
 ```python
 from src.okx_sdk import ws_public
@@ -159,7 +211,7 @@ await ws.subscribe([{"channel": "tickers", "instId": "BTC-USDT-SWAP"}])
 await ws.start(callback)
 ```
 
-### 5.2 私有频道
+### 6.2 私有频道
 
 ```python
 from src.okx_sdk import ws_private
@@ -169,7 +221,7 @@ await ws.subscribe([{"channel": "orders", "instType": "SWAP"}])
 await ws.start(callback)
 ```
 
-### 5.3 禁止行为
+### 6.3 禁止行为
 
 - ❌ 禁止在 SDK 之外重写 WebSocket 心跳逻辑
 - ❌ 禁止在 SDK 之外重写重连逻辑
@@ -178,7 +230,7 @@ await ws.start(callback)
 
 ***
 
-## 6. 审计检查清单
+## 7. 审计检查清单
 
 - [ ] 是否使用 `python-okx` SDK 而非自行封装的 HTTP 客户端？
 - [ ] SDK 是否保持最新版本？
@@ -188,6 +240,10 @@ await ws.start(callback)
 - [ ] WebSocket 是否使用 SDK 的内置机制？
 - [ ] 代理配置是否通过 `sys-proxy-rules.md` 规范设置？
 - [ ] `flag` 参数是否通过 `OKX_FLAG` 环境变量控制？
+- [ ] 平仓/SL/TP 单是否携带 `reduceOnly=True`？
+- [ ] SL/TP 触发价方向是否与主单方向一致？
+- [ ] 开仓时是否同步挂载 SL/TP 到交易所（不依赖本地监控）？
+- [ ] 下单函数是否拆分为 `place_market_entry` / `place_market_close`？
 
 ***
 

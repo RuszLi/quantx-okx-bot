@@ -15,12 +15,11 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import pandas as pd
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.paper.pipeline import compute_ensemble_signals, validate_symbols
+from src.live.risk_guard import RiskGuard
+from src.paper.pipeline import append_csv, compute_ensemble_signals, validate_symbols
 
 PAPER_ROOT = ROOT / "data" / "paper_ensemble"
 ENSEMBLE_PATH = PAPER_ROOT / "ensemble.csv"
@@ -48,14 +47,14 @@ def save_state(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def run_once() -> None:
+def run_once(risk_guard: RiskGuard | None = None) -> None:
     state = load_state()
     state["cycle_count"] += 1
     now_iso = datetime.now(timezone.utc).isoformat()
     logger.info(f"[Cycle {state['cycle_count']}] 开始 — {now_iso}")
 
     validate_symbols()
-    result = compute_ensemble_signals()
+    result = compute_ensemble_signals(equity=7.0, risk_guard=risk_guard)
 
     if result.empty:
         logger.info("  ensemble 无输出")
@@ -66,9 +65,7 @@ def run_once() -> None:
     result["recorded_at"] = now_iso
     result["mode"] = "paper"
 
-    existing = load_csv(ENSEMBLE_PATH) if ENSEMBLE_PATH.exists() else None
-    combined = pd.concat([existing, result], ignore_index=True) if existing is not None else result
-    combined.to_csv(ENSEMBLE_PATH, index=False)
+    append_csv(ENSEMBLE_PATH, result)
 
     c_count = int((result["edge"] == "C").sum())
     d_count = int((result["edge"] == "D").sum())
@@ -78,18 +75,20 @@ def run_once() -> None:
     logger.info(f"  Ensemble 输出 {len(result)} 笔 (C={c_count}, D={d_count})")
 
 
-def load_csv(path):
-    import pandas as pd
-    return pd.read_csv(path)
-
-
 def run_loop(interval_minutes: int = 60) -> None:
     logger.info(f"启动持续轮询模式，间隔={interval_minutes} 分钟")
+    risk_guard = RiskGuard()
+    risk_guard.update_equity(7.0)
     while True:
         try:
-            run_once()
+            run_once(risk_guard=risk_guard)
         except Exception as e:
             logger.error(f"扫描异常: {type(e).__name__}: {e}")
+
+        if risk_guard.is_halted:
+            logger.warning(f"风控触发 ({risk_guard.halted_by})，停止运行")
+            break
+
         time.sleep(interval_minutes * 60)
 
 
@@ -99,7 +98,9 @@ def main() -> None:
     parser.add_argument("--interval", type=int, default=60, help="轮询间隔 (分钟)")
     args = parser.parse_args()
     if args.once:
-        run_once()
+        risk_guard = RiskGuard()
+        risk_guard.update_equity(7.0)
+        run_once(risk_guard=risk_guard)
     else:
         run_loop(args.interval)
 

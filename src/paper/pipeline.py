@@ -37,12 +37,20 @@ _VALIDATED = False
 
 
 def _okx_req(fn, *args, **kwargs):
+    """带重试的 OKX API 请求，失败时返回空结果而非抛出异常。"""
+    last_exc = None
     for wait in _RETRY_SLEEP:
         try:
             return fn(*args, **kwargs)
-        except Exception:
+        except Exception as e:
+            last_exc = e
             time.sleep(wait)
-    return fn(*args, **kwargs)
+    # 最后一次尝试
+    try:
+        return fn(*args, **kwargs)
+    except Exception as e:
+        # 返回 OKX 错误格式，让调用方处理
+        return {"code": "-1", "msg": f"请求失败: {type(e).__name__}: {e}", "data": []}
 
 
 def _rows_to_frame(rows: list[list[str]]) -> pd.DataFrame:
@@ -67,20 +75,19 @@ def fetch_1h_candles(inst_id: str, limit: int = N_HOURS_HISTORY) -> pd.DataFrame
     return _rows_to_frame(result.get("data") or [])
 
 
-def build_c_market_data(kline_1h: pd.DataFrame) -> pd.DataFrame:
+def build_c_market_data(kline_1h: pd.DataFrame, btc_rv_pct: pd.Series | None = None) -> pd.DataFrame:
     if kline_1h.empty or len(kline_1h) < 5:
         return pd.DataFrame()
     df = kline_1h.set_index("ts")
     frame = pd.DataFrame(index=df.index)
-    frame["btc_close"] = df["close"]
-    frame["btc_return_60m"] = df["close"].pct_change().fillna(0.0)
-    realized_vol = df["close"].pct_change().rolling(60, min_periods=5).std().fillna(0.0)
-    frame["btc_rv_pct"] = realized_vol.rank(pct=True).fillna(0.0)
     frame["alt_close"] = df["close"]
     frame["alt_vwap_60m"] = df["close"].rolling(60, min_periods=5).mean().fillna(df["close"])
     frame["alt_volume_24h"] = df["quote_volume"].rolling(24, min_periods=5).sum().fillna(0.0)
-    age_days = (pd.Series(frame.index, index=frame.index) - frame.index.min()).dt.total_seconds() / 86400.0
-    frame["alt_age_days"] = age_days.clip(lower=0.0)
+    if btc_rv_pct is not None:
+        frame["btc_rv_pct"] = btc_rv_pct.reindex(frame.index, method="nearest").fillna(0.5)
+    else:
+        realized_vol = df["close"].pct_change().rolling(60, min_periods=5).std().fillna(0.0)
+        frame["btc_rv_pct"] = realized_vol.rank(pct=True).fillna(0.0)
     return frame
 
 
@@ -119,17 +126,69 @@ def append_csv(path: Path, new_rows: pd.DataFrame) -> None:
     combined.to_csv(path, index=False)
 
 
+def _build_btc_rv() -> pd.Series | None:
+    try:
+        btc = fetch_1h_candles("BTC-USDT-SWAP", N_HOURS_HISTORY * 2)
+        if btc.empty or len(btc) < 60:
+            return None
+        df = btc.set_index("ts")
+        rv = df["close"].pct_change().rolling(60, min_periods=5).std()
+        return rv.rank(pct=True)
+    except Exception:
+        return None
+
+
+def _compute_signal_score(signal_row: pd.Series, current_price: float) -> float:
+    """计算信号质量分数，用于排序选择最优信号。
+
+    评分维度：
+    1. z-score 绝对值（越大越极端）
+    2. 止损距离百分比（越小越好）
+    3. 风险收益比（TP/SL 距离比）
+    """
+    score = 0.0
+
+    # 1. z-score 贡献（假设 alt_z 在信号中可用）
+    alt_z = signal_row.get("alt_z", 0)
+    if not pd.isna(alt_z):
+        score += abs(alt_z) * 10  # z=2 时贡献 20 分
+
+    # 2. 止损距离百分比（越小越好）
+    stop_price = signal_row.get("stop_price", 0)
+    entry_price = signal_row.get("entry_price", current_price)
+    if entry_price > 0 and stop_price > 0:
+        sl_distance_pct = abs(entry_price - stop_price) / entry_price
+        score -= sl_distance_pct * 100  # 止损距离 1% 扣 1 分
+
+    # 3. 风险收益比
+    target_price = signal_row.get("target_price", 0)
+    if entry_price > 0 and stop_price > 0 and target_price > 0:
+        sl_distance = abs(entry_price - stop_price)
+        tp_distance = abs(target_price - entry_price)
+        if sl_distance > 0:
+            rr_ratio = tp_distance / sl_distance
+            score += rr_ratio * 5  # R:R=2 时贡献 10 分
+
+    return score
+
+
 def compute_ensemble_signals(
     inst_ids: list[str] | None = None,
     equity: float = 7.0,
+    risk_guard: RiskGuard | None = None,
 ) -> pd.DataFrame:
     validate_symbols()
+
+    if risk_guard is not None and risk_guard.is_halted:
+        return pd.DataFrame()
+
     targets = inst_ids or OKX_INST_IDS
 
     strategy_c = BetaDecoupleStrategy()
     strategy_d = WeekendWickStrategy()
     ensemble = EnsembleStrategy()
-    risk_guard = RiskGuard()
+
+    btc_rv = _build_btc_rv()
 
     signals_c: list[pd.DataFrame] = []
     signals_d: list[pd.DataFrame] = []
@@ -139,13 +198,16 @@ def compute_ensemble_signals(
         if candles.empty or len(candles) < 24:
             continue
 
-        md_c = build_c_market_data(candles)
+        md_c = build_c_market_data(candles, btc_rv_pct=btc_rv)
         if not md_c.empty and len(md_c) >= 5:
             sigs = strategy_c.compute_signals(md_c)
             if not sigs.empty:
                 sigs["symbol"] = SYMBOL_MAP[inst_id]
                 sigs["strategy_name"] = "beta_decouple"
                 sigs["edge"] = "C"
+                # 计算信号分数
+                current_price = float(md_c.iloc[-1]["alt_close"])
+                sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
                 signals_c.append(sigs)
 
         md_d = build_d_market_data(candles)
@@ -155,16 +217,18 @@ def compute_ensemble_signals(
                 sigs["symbol"] = SYMBOL_MAP[inst_id]
                 sigs["strategy_name"] = "weekend_wick"
                 sigs["edge"] = "D"
+                # 计算信号分数
+                current_price = float(md_d.iloc[-1]["close"])
+                sigs["score"] = sigs.apply(lambda row: _compute_signal_score(row, current_price), axis=1)
                 signals_d.append(sigs)
 
     all_raw = pd.concat(signals_c + signals_d, ignore_index=True) if (signals_c or signals_d) else pd.DataFrame()
     if all_raw.empty:
         return pd.DataFrame()
 
-    result = ensemble.resolve_conflicts(all_raw, available_equity=equity)
-    risk_guard.update_equity(equity)
+    # 按分数降序排序，选择最优信号
+    all_raw = all_raw.sort_values("score", ascending=False)
 
-    if risk_guard.is_halted:
-        return pd.DataFrame()
+    result = ensemble.resolve_conflicts(all_raw, available_equity=equity)
 
     return result

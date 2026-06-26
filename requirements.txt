@@ -11,3 +11,4 @@ tqdm>=4.66.0
 
 # OKX SDK
 python-okx>=0.4.1
+socksio>=1.0.0  # httpx[socks] 轻量替代，供 SOCKS5 代理使用
