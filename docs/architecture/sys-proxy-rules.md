@@ -6,12 +6,13 @@
 
 ## 代理配置
 
-| 协议         | 代理地址                       | 说明                                           |
+代理地址通过 `.env` 文件中的 `OKX_PROXY` 配置，禁止在代码中硬编码。
+
+| 常见端口         | 代理地址                       | 说明                                           |
 | :--------- | :------------------------- | :------------------------------------------- |
-| SOCKS5（推荐） | `socks5h://127.0.0.1:34982` | HTTP/HTTPS 全协议走 SOCKS5，避免 HTTPS CONNECT 隧道问题 |
-| HTTP       | `http://127.0.0.1:7890`    | 仅 HTTP，兼容遗留配置                                |
-| HTTPS       | `https://127.0.0.1:7890`    | 仅 HTTPS，兼容遗留配置                                |
-| 混合       | `http://127.0.0.1:7897`    | 混合端口                               |
+| Clash Mixed（当前） | `http://127.0.0.1:7897` | Clash Verge Rev 默认混合端口 |
+| Clash HTTP       | `http://127.0.0.1:7890`    | Clash 传统 HTTP 端口                                |
+| SOCKS5       | `socks5h://127.0.0.1:7897`    | 走 SOCKS5 协议                               |
 
 ## 适用范围
 
@@ -26,31 +27,25 @@
 
 代理地址由 `src/okx_sdk.py` 中的 `_proxy()` 函数统一解析，优先级如下：
 
-| 优先级   | 来源                  |
-| :---- | :------------------ |
-| 1（最高） | 环境变量 `HTTP_PROXY`   |
-| 2     | 环境变量 `HTTPS_PROXY`  |
-| 3（默认） | 硬编码 `DEFAULT_PROXY` |
+| 优先级   | 来源                  | 说明 |
+| :---- | :------------------ | :-- |
+| 1（最高） | 环境变量 `HTTP_PROXY`   | 系统级覆盖 |
+| 2     | 环境变量 `HTTPS_PROXY`  | 系统级覆盖 |
+| 3     | 环境变量 `OKX_PROXY`    | 项目专用，配置在 `.env` |
+| 4（默认） | `None`（不使用代理） | 无代理直连 |
 
 ```python
 def _proxy() -> str | None:
-    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or DEFAULT_PROXY
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("OKX_PROXY")
 ```
 
-默认值为 `socks5h://127.0.0.1:34982`，SOCKS5 在传输层统一处理 HTTP/HTTPS，避免 HTTP CONNECT 隧道带来的 TLS 握手不稳定问题。可通过环境变量 `HTTP_PROXY` 或 `HTTPS_PROXY` 覆盖为 HTTP 代理。
+配置方式：在 `.env` 文件中添加 `OKX_PROXY=http://127.0.0.1:7897`，切换代理时只需修改 `.env`，无需改代码。
 
 ### 2. 代理开关
 
-对于需要灵活切换的场景，提供显式开关：
+代理由 `.env` 中的 `OKX_PROXY` 控制。如需临时禁用代理，可设置 `OKX_PROXY=`（空值）或注释掉该行。
 
-```python
-def __init__(self, use_proxy: bool = True):
-    self.proxy = "http://127.0.0.1:7890" if use_proxy else None
-```
-
-> 注意：默认值必须为 `use_proxy=True`。
-
-### 4. 网络库适配示例
+### 3. 网络库适配示例
 
 | <br />             | 代理参数 示例                                                        |
 | :----------------- | :------------------------------------------------------------- |
@@ -60,19 +55,19 @@ def __init__(self, use_proxy: bool = True):
 | **urllib**         | `urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})` |
 | **python-okx SDK** | 通过 `src/okx_sdk.py` 统一注入，无需各模块自行配置                             |
 
-## 5. SDK 客户端代理集成
+## 4. SDK 客户端代理集成
 
 `python-okx` SDK 底层使用 `httpx`，代理参数通过 `src/okx_sdk.py` 统一注入：
 
-### 5.1 自动读取环境变量
+### 4.1 从 .env 读取代理
 
 ```python
 # src/okx_sdk.py 内部逻辑
-proxy = os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or None
-MarketData.MarketAPI(proxy=proxy)
+def _proxy() -> str | None:
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("OKX_PROXY")
 ```
 
-### 5.2 各模块无需自行配置代理
+### 4.2 各模块无需自行配置代理
 
 SDK 客户端初始化已包含代理配置，业务模块**禁止**重复设置代理：
 
@@ -86,6 +81,6 @@ from okx import MarketData
 client = MarketData.MarketAPI(proxy="http://127.0.0.1:7890")
 ```
 
-### 5.3 公共数据客户端也走代理
+### 4.3 公共数据客户端也走代理
 
-即使是无需凭证的 `MarketAPI()` 和 `PublicAPI()`，也应确保通过统一工厂获取以保证代理覆盖。|
+即使是无需凭证的 `MarketAPI()` 和 `PublicAPI()`，也应确保通过统一工厂获取以保证代理覆盖。

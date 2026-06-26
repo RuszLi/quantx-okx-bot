@@ -17,11 +17,8 @@ load_dotenv()
 
 # ── 凭证读取 ──────────────────────────────────────────
 
-DEFAULT_PROXY = "socks5h://127.0.0.1:34982"
-
-
 def _proxy() -> str | None:
-    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or DEFAULT_PROXY
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("OKX_PROXY")
 
 
 def _flag() -> str:
