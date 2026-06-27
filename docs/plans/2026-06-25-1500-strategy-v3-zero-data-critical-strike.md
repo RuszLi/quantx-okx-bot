@@ -1222,63 +1222,6 @@ PM 批注：不要把 live α 阶段降到 `1x + 最小仓位 + dry-run comparis
 
 ***
 
-### 18.7 实现流程路径
-
-```mermaid
-flowchart TD
-    Start([开始]) --> DesignSignoff[Phase 0: 设计 Sign-off<br/>Day 0]
-    DesignSignoff --> AuditRevision{审计修订<br/>通过?}
-    AuditRevision -->|否| Revise[修订设计文档]
-    Revise --> AuditRevision
-    AuditRevision -->|是| Branch[创建分支<br/>feat/v3-zero-data]
-    Branch --> API签核[§18.2 API 签核闸门]
-    API签核 --> API签核通过{API 签核<br/>通过?}
-    API签核通过 -->|否| 禁用策略[禁用对应策略<br/>funding→B/E, OI→H, announcements→A]
-    禁用策略 --> API签核通过
-    API签核通过 -->|是| 执行可行性[§18.3 $7 执行可行性闸门]
-    执行可行性 --> 执行可行性通过{执行可行性<br/>通过?}
-    执行可行性通过 -->|否| 调整策略[调整策略参数<br/>或禁用]
-    调整策略 --> 执行可行性通过
-    执行可行性通过 -->|是| 数据管道[Day 1: 数据管道搭建<br/>OKX announcements/funding/OI]
-    数据管道 --> 高优先回测[Day 1: 高优先 edge 回测<br/>A + B + E]
-    高优先回测 --> 中频回测[Day 2: 中频 edge 回测<br/>C + D + K + H]
-    中频回测 --> 横向汇总[Day 2: 横向汇总报告<br/>v3_phase0_combo.md]
-    横向汇总 --> 单Edge闸门{§18.4 单 edge<br/>证据闸门}
-    单Edge闸门 -->|A/E 至少1条 PASS<br/>+ 任意1条低相关 PASS| Ensemble[Day 3: Ensemble 仲裁层<br/>+ State Machine]
-    单Edge闸门 -->|不通过| 策略下线[策略下线<br/>不修不补]
-    Ensemble --> PaperTrading[Day 3: Paper Trading<br/>24h 纸面跑]
-    PaperTrading --> Ensemble闸门{§18.5 Ensemble<br/>证据闸门}
-    Ensemble闸门 -->|通过| 实盘启动[Day 4: 实盘 $7 启动<br/>α 阶段]
-    Ensemble闸门 -->|不通过| 重新回测[重新回测<br/>调整策略]
-    重新回测 --> 单Edge闸门
-    实盘启动 --> PreChecklist{入场前<br/>Checklist}
-    PreChecklist -->|全部通过| AlphaPhase[α 阶段: $7 → $14]
-    PreChecklist -->|不通过| 修复[修复问题]
-    修复 --> PreChecklist
-    AlphaPhase --> BetaPhase[β 阶段: $14 → $25]
-    BetaPhase --> GammaPhase[γ 阶段: $25 → $50]
-    GammaPhase --> FinalReview[Day 7: 整体复盘<br/>v3_live_week1.md]
-    FinalReview --> Success{达到 $50?}
-    Success -->|是| 提现[提现 $40<br/>留 $10 轻仓继续]
-    Success -->|否| 部分成功[部分成功<br/>复盘失败原因]
-    提现 --> End([结束])
-    部分成功 --> End
-    策略下线 --> 框架归档[框架资产归档<br/>Strategy 协议 + Pipeline]
-    框架归档 --> End
-
-    %% 样式定义
-    classDef phase fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef gate fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef decision fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef action fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef failure fill:#ffebee,stroke:#b71c1c,stroke-width:2px
-
-    class DesignSignoff,数据管道,高优先回测,中频回测,横向汇总,Ensemble,PaperTrading,AlphaPhase,BetaPhase,GammaPhase,FinalReview phase
-    class API签核,执行可行性,单Edge闸门,Ensemble闸门,PreChecklist decision
-    class Branch,禁用策略,调整策略,策略下线,重新回测,修复 action
-    class 提现,部分成功,框架归档,End failure
-```
-
 **流程说明：**
 
 | 阶段 | 关键任务 | 产出 | 闸门 |
@@ -1288,3 +1231,11 @@ flowchart TD
 | Day 2 | 中频 edge 回测（C/D/K/H）+ 横向汇总 | `v3_C_beta_decouple.md`、`v3_D_weekend_wick.md`、`v3_K_pair_mr.md`、`v3_H_oi_velocity.md`、`v3_phase0_combo.md` | §18.4 |
 | Day 3 | Ensemble 仲裁层 + State Machine + Paper Trading | `v3_paper.md` | §18.5 |
 | Day 4-7 | 实盘 $7 → $50（α/β/γ 阶段） | `v3_live_week1.md` | §18 全部闸门 |
+
+# 18.7 实施变更日志
+
+> 根据 §17 对内承诺，实施过程中任何阈值或设计变更必须记录于此。
+
+| 日期 | 变更 | 触发原因 | 影响范围 | 状态 |
+|---|---|---|---|---|
+| 2026-06-26 | **移除 `EnsembleStrategy.min_equity`** — 取消 $7 最低权益闸门，子策略产生信号后直接进入 ensemble 仲裁，不做权益过滤 | 实盘权益 $6.24 低于 $7.0 门槛，导致所有信号被静默丢弃，连续 2h 无订单 | `src/backtest/strategies/ensemble.py`: 移除 `min_equity` 字段；`resolve_conflicts` 不再检查权益 | 已实施 |

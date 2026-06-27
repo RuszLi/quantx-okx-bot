@@ -58,7 +58,7 @@ NOTIONAL_MULTIPLE = 10
 # 理由：相关性极高的同向 alt 仓位并非分散，而是 N 倍手续费的同一 beta 下注；
 # 单笔 round-trip 手续费≈名义×0.1%，多开会把 $3 级别本金快速磨光。
 # 决策记录见 docs/design/2026-06-26-live-echo-runner.md §4.6。
-MAX_CONCURRENT_POSITIONS = 2
+MAX_CONCURRENT_POSITIONS = 5
 
 
 def fmt_sz(sz: float) -> str:
