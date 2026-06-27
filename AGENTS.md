@@ -66,7 +66,7 @@
 
 根据任务复杂度酌情启用。已创建的计划必须进行方案审查与结案审核。
 
-- `docs/audits/` 用于文档审计及非平凡的审计记录存档
+- `docs/audits/` 用于文档审计及非琐碎的审计记录存档
 - `docs/testing/` 用于手工验证或探索性测试
 - `docs/retrospectives/` 用于需求或原型出现重大偏差时的复盘
 - `docs/skills/` 用于同类问题反复出现后沉淀的可复用提示词
@@ -96,14 +96,17 @@
 
 所有已创建的方案在实施和结案前，必须遵循 `docs/plans/00-plan-authoring-and-execution-guide.md` 中的流程规范。受保护区域、未解决的产品风险和事实来源冲突需要人类/子代理审查或保持开放状态。
 
-## 技能使用规则
+## Skill使用规则
 
 使用可复用技能前，必须确认以下全部条件：
 
 - 任务类型和路径已从需求文档和归属文档中明确
 - 技能匹配工作方法，而非仅业务标签相似
+- required inputs listed in `docs/skills/README.md` are available
 - `.agents/skills` 中列出的所需输入已就绪
 - 预期输出已知且可存放到正确的文档位置
+
+默认不自动调用`using-superpowers`以及其相关的 skills，只在有明确需求时调用，或者在识别到任务符合以下性质时：
 
 对于非琐碎的方案，每个依赖可复用技能的阶段或条目应记录 `Skill: <名称>` 或 `Skill: none`。
 
