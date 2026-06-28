@@ -7,7 +7,7 @@
 - `docs/design/` 负责应用层功能与业务设计。
 - `docs/architecture/` 负责横跨多个功能面的技术结构。
 
----
+***
 
 ## 建议阅读顺序
 
@@ -20,7 +20,7 @@
 7. [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单
 8. 随项目演进，继续补充更具体的归属文档
 
----
+***
 
 ## 归属文档规则
 
@@ -30,7 +30,7 @@
 - 把被否决的方案与探索性记录迁到 `docs/analysis/`
 - 当技术规则是为支撑某个具体产品行为而存在时，请引用 `docs/design/` 下对应的应用层归属文档
 
----
+***
 
 ## 优先级边界
 
@@ -38,7 +38,7 @@
 - `docs/architecture/` 归属技术结构与跨领域实现规则
 - 当问题涉及持久化或 schema 真值时，模型/schema 文件本身是权威来源
 
----
+***
 
 ## 初始归属文档
 
@@ -50,7 +50,7 @@
 - [2026-06-27-strategy-v3-execution-architecture.md](./2026-06-27-strategy-v3-execution-architecture.md) — V3 策略执行架构
 - [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单
 
----
+***
 
 # 架构文档写作规范
 
@@ -68,12 +68,12 @@
 
 ### 1.2 命名模式
 
-| 模式 | 格式 | 示例 |
-|:---|:---|:---|
-| **规则型** | `<subject>-rules.md` | `okx-sdk-rules.md`、`sys-proxy-rules.md` |
-| **约束型** | `<subject>-constraints.md` | `strategy-and-factor-constraints.md` |
-| **指南型** | `<subject>-guide.md` | `deployment-guide.md` |
-| **规范型** | `<subject>-spec.md` | `api-spec.md` |
+| 模式      | 格式                         | 示例                                      |
+| :------ | :------------------------- | :-------------------------------------- |
+| **规则型** | `<subject>-rules.md`       | `okx-sdk-rules.md`、`sys-proxy-rules.md` |
+| **约束型** | `<subject>-constraints.md` | `strategy-and-factor-constraints.md`    |
+| **指南型** | `<subject>-guide.md`       | `deployment-guide.md`                   |
+| **规范型** | `<subject>-spec.md`        | `api-spec.md`                           |
 
 ### 1.3 命名原则
 
@@ -84,17 +84,17 @@
 
 ### 1.4 现有文件清单
 
-| 文件 | 类型 | 主题 |
-|:---|:---|:---|
-| `project-vision.md` | 愿景型 | 产品与系统意图 |
-| `strategy-and-factor-constraints.md` | 约束型 | 策略与因子挖掘约束 |
-| `okx-sdk-rules.md` | 规则型 | OKX SDK 使用规范 |
-| `sys-proxy-rules.md` | 规则型 | 本地代理规范 |
-| `python-env-rules.md` | 规则型 | Python 运行环境规范 |
-| `2026-06-27-strategy-v3-execution-architecture.md` | 架构型 | V3 策略执行架构 |
-| `backtest-exit-klines-alignment-checklist.md` | 检查型 | 回测退出 K 线对齐检查清单 |
+| 文件                                                 | 类型  | 主题             |
+| :------------------------------------------------- | :-- | :------------- |
+| `project-vision.md`                                | 愿景型 | 产品与系统意图        |
+| `strategy-and-factor-constraints.md`               | 约束型 | 策略与因子挖掘约束      |
+| `okx-sdk-rules.md`                                 | 规则型 | OKX SDK 使用规范   |
+| `sys-proxy-rules.md`                               | 规则型 | 本地代理规范         |
+| `python-env-rules.md`                              | 规则型 | Python 运行环境规范  |
+| `2026-06-27-strategy-v3-execution-architecture.md` | 架构型 | V3 策略执行架构      |
+| `backtest-exit-klines-alignment-checklist.md`      | 检查型 | 回测退出 K 线对齐检查清单 |
 
----
+***
 
 ## 2. 内容格式规范
 
@@ -148,16 +148,16 @@
 
 ### 2.3 内容格式
 
-| 元素 | 格式 | 示例 |
-|:---|:---|:---|
-| **加粗** | `**文本**` | 用于强调关键术语或参数名 |
-| *斜体* | `*文本*` | 用于引用或注释 |
-| `行内代码` | `` `代码` `` | 用于命令、文件名、变量名 |
-| 代码块 | 三个反引号 + 语言标识 | 用于多行代码示例 |
-| 表格 | Markdown 表格 | 用于结构化数据展示 |
-| 有序列表 | `1. 2. 3.` | 用于步骤或优先级 |
-| 无序列表 | `- ` | 用于枚举项 |
-| 复选框 | `- [ ]` | 用于检查清单 |
+| 元素     | 格式           | 示例           |
+| :----- | :----------- | :----------- |
+| **加粗** | `**文本**`     | 用于强调关键术语或参数名 |
+| *斜体*   | `*文本*`       | 用于引用或注释      |
+| `行内代码` | `` `代码` ``   | 用于命令、文件名、变量名 |
+| 代码块    | 三个反引号 + 语言标识 | 用于多行代码示例     |
+| 表格     | Markdown 表格  | 用于结构化数据展示    |
+| 有序列表   | `1. 2. 3.`   | 用于步骤或优先级     |
+| 无序列表   | `- `         | 用于枚举项        |
+| 复选框    | `- [ ]`      | 用于检查清单       |
 
 ### 2.4 链接规范
 
@@ -165,7 +165,7 @@
 - 外部链接使用完整 URL：`[官方文档](https://okx.com/docs-v5/)`
 - 链接前后各留一个空格（中文排版规范）
 
----
+***
 
 ## 3. 吸引子文档写作指引
 
@@ -187,13 +187,13 @@
 
 ### 3.3 常见吸引子类型
 
-| 类型 | 用途 | 示例 |
-|:---|:---|:---|
-| **规则型（Rules）** | 规定必须遵守的行为规范 | SDK 使用规范、代理规范 |
-| **约束型（Constraints）** | 限定边界和禁止行为 | 策略与因子约束 |
-| **指南型（Guide）** | 提供实施指引 | 部署指南、接入指南 |
+| 类型                   | 用途          | 示例            |
+| :------------------- | :---------- | :------------ |
+| **规则型（Rules）**       | 规定必须遵守的行为规范 | SDK 使用规范、代理规范 |
+| **约束型（Constraints）** | 限定边界和禁止行为   | 策略与因子约束       |
+| **指南型（Guide）**       | 提供实施指引      | 部署指南、接入指南     |
 
----
+***
 
 ## 4. 审计检查清单
 
@@ -208,7 +208,7 @@
 - [ ] 是否包含相关文档链接？
 - [ ] 是否遵循中文排版规范（中英文空格、全角标点）？
 
----
+***
 
 ## 相关文档
 
@@ -217,5 +217,5 @@
 - [okx-sdk-rules.md](./okx-sdk-rules.md) — OKX SDK 使用规范
 - [sys-proxy-rules.md](./sys-proxy-rules.md) — 本地代理规范
 - [python-env-rules.md](./python-env-rules.md) — Python 运行环境规范
-- [2026-06-27-strategy-v3-execution-architecture.md](./2026-06-27-strategy-v3-execution-architecture.md) — V3 策略执行架构
 - [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单
+
