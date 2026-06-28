@@ -26,6 +26,151 @@ from src.data.okx_funding import fetch_funding_history
 from src.data.okx_oi import fetch_open_interest
 
 
+def simulate_signals_on_bars(
+    signals: pd.DataFrame,
+    bars: pd.DataFrame,
+    params: ExecParams | None = None,
+) -> pd.DataFrame:
+    """Per-bar simulation for named strategies (fixes optimistic bias).
+
+    Replicates engine.py simulate() logic but accepts an independent
+    signals DataFrame instead of embedded signal columns.
+    """
+    if params is None:
+        params = ExecParams()
+    if signals.empty or bars.empty:
+        return pd.DataFrame()
+
+    stop_distance_pct = 0.012
+    trades: list[dict] = []
+    state = "FLAT"
+    equity = float(params.initial_equity)
+    from collections import deque
+
+    recent_losses: deque = deque(maxlen=2)
+    cooldown_until: pd.Timestamp | None = None
+    daily_anchor_equity = equity
+    daily_anchor_date = bars.index[0].date() if len(bars) > 0 else None
+    halted_today = False
+
+    entry_ts: pd.Timestamp | None = None
+    entry_bar_idx: int | None = None
+    entry_price = 0.0
+    entry_signal = 0
+    target_px = 0.0
+    stop_px = 0.0
+
+    # Index signals by entry_ts for O(1) lookup
+    sig_by_ts = {}
+    for _, sig in signals.iterrows():
+        ets = sig.get("entry_ts")
+        if pd.isna(ets):
+            continue
+        if isinstance(ets, str):
+            ets = pd.Timestamp(ets)
+        sig_by_ts[ets] = sig
+
+    n_bars = len(bars)
+    for bar_idx in range(n_bars):
+        ts = bars.index[bar_idx]
+        row = bars.iloc[bar_idx]
+
+        # Daily anchor
+        if daily_anchor_date is not None and ts.date() != daily_anchor_date:
+            daily_anchor_equity = equity
+            daily_anchor_date = ts.date()
+            halted_today = False
+
+        # Daily DD halt
+        if daily_anchor_equity > 0 and equity < daily_anchor_equity * (1.0 - params.daily_max_drawdown_pct):
+            halted_today = True
+
+        # Cooldown
+        if cooldown_until is not None and ts < cooldown_until:
+            continue
+
+        if state == "FLAT":
+            sig = sig_by_ts.get(ts)
+            if sig is not None and not halted_today:
+                entry_ts = ts
+                entry_bar_idx = bar_idx
+                entry_price = float(sig["entry_price"])
+                entry_signal = int(sig["signal"])
+                target_px = float(sig.get("target_price", np.nan) or np.nan)
+                stop_px = float(sig.get("stop_price", np.nan) or np.nan)
+                if not np.isnan(target_px) and not np.isnan(stop_px):
+                    state = "IN_TRADE"
+                    # Compute actual stop distance from signal
+                    stop_distance_pct = abs(entry_price - stop_px) / entry_price
+
+        elif state == "IN_TRADE" and entry_bar_idx is not None:
+            exit_reason = None
+            exit_px = 0.0
+            bars_held = bar_idx - entry_bar_idx
+
+            bar_high = float(row["high"])
+            bar_low = float(row["low"])
+
+            if entry_signal == +1:  # LONG
+                if bar_low <= stop_px:
+                    exit_reason = "SL"
+                    exit_px = stop_px
+                elif bar_high >= target_px:
+                    exit_reason = "TP"
+                    exit_px = target_px
+                elif bars_held >= params.time_stop_bars:
+                    exit_reason = "TIME"
+                    exit_px = float(row["close"]) if not pd.isna(row["close"]) else float(row["open"])
+            else:  # SHORT
+                if bar_high >= stop_px:
+                    exit_reason = "SL"
+                    exit_px = stop_px
+                elif bar_low <= target_px:
+                    exit_reason = "TP"
+                    exit_px = target_px
+                elif bars_held >= params.time_stop_bars:
+                    exit_reason = "TIME"
+                    exit_px = float(row["close"]) if not pd.isna(row["close"]) else float(row["open"])
+
+            if exit_reason is None:
+                continue
+
+            sign = float(entry_signal)
+            entry_fill = entry_price * (1.0 + params.slippage_per_side * sign)
+            exit_fill = exit_px * (1.0 - params.slippage_per_side * sign)
+            raw_ret = sign * (exit_fill - entry_fill) / entry_fill
+            net_ret = raw_ret - 2.0 * params.fee_taker_per_side
+            pnl_R = net_ret / stop_distance_pct
+            equity_change = equity * params.risk_per_trade_pct * pnl_R
+            equity += equity_change
+            pnl_pct_equity = equity_change / (equity - equity_change) * 100.0 if (equity - equity_change) != 0 else 0.0
+
+            is_loss = pnl_R < 0
+            recent_losses.append(1 if is_loss else 0)
+
+            trades.append({
+                "entry_ts": entry_ts,
+                "exit_ts": ts,
+                "side": "LONG" if entry_signal == 1 else "SHORT",
+                "entry_price": round(entry_price, 8),
+                "exit_price": round(exit_px, 8),
+                "target_price": round(target_px, 8),
+                "stop_price": round(stop_px, 8),
+                "exit_reason": exit_reason,
+                "pnl_R": round(pnl_R, 6),
+                "pnl_pct_equity": round(pnl_pct_equity, 4),
+                "equity_after": round(equity, 6),
+                "bars_held": bars_held,
+            })
+
+            if sum(recent_losses) == 2 and len(recent_losses) == 2:
+                cooldown_until = ts + pd.Timedelta(minutes=params.cooldown_after_loss_bars)
+
+            state = "FLAT"
+
+    return pd.DataFrame(trades)
+
+
 def load_universe(path: str) -> list[str]:
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
@@ -86,7 +231,18 @@ def _load_okx_funding(frame: pd.DataFrame, inst_id: str) -> None:
             funding.index = pd.to_datetime(funding.index, utc=True)
             frame.index = pd.to_datetime(frame.index, utc=True)
             frame["funding_rate"] = funding["funding_rate"].reindex(frame.index, method="ffill", limit=500).values
-            frame["next_funding_time"] = funding.index[0]
+            # Compute next_funding_time for each bar
+            funding_times = sorted(funding.index)
+            next_times = []
+            for ts in frame.index:
+                # Find the smallest funding_time strictly greater than ts
+                nxt = pd.NaT
+                for ft in funding_times:
+                    if ft > ts:
+                        nxt = ft
+                        break
+                next_times.append(nxt)
+            frame["next_funding_time"] = next_times
             return
     except Exception:
         pass
@@ -223,18 +379,26 @@ def run_named_strategy(
     elif bool(getattr(strategy_config, "is_event_driven", False)):
         trades = simulate_event_strategy(merged_signals)
     else:
-        trades = merged_signals.copy()
-        if "exit_ts" not in trades.columns and "valid_until_ts" in trades.columns:
-            trades["exit_ts"] = trades["valid_until_ts"]
-        if "exit_price" not in trades.columns:
-            trades["exit_price"] = trades["target_price"]
-        if "exit_reason" not in trades.columns:
-            trades["exit_reason"] = "SIGNAL"
-        trades["side"] = trades["signal"].map({1: "LONG", -1: "SHORT"})
-        stop_distance_pct = (trades["entry_price"] - trades["stop_price"]).abs() / trades["entry_price"].replace(0, pd.NA)
-        raw_ret = trades["signal"] * (trades["exit_price"] - trades["entry_price"]) / trades["entry_price"].replace(0, pd.NA)
-        trades["pnl_R"] = raw_ret / stop_distance_pct.replace(0, pd.NA)
-        trades["equity_after"] = 0.0
+        # Per-bar simulation to fix optimistic bias (exit_price=target_price assumption)
+        metadata = getattr(strategy_config, "metadata", {}) or {}
+        custom_time_stop = metadata.get("time_stop_bars", 6)
+        custom_risk = metadata.get("risk_per_trade_pct", 0.20)
+        eparams = ExecParams(time_stop_bars=custom_time_stop, risk_per_trade_pct=custom_risk)
+
+        all_trades: list[pd.DataFrame] = []
+        for symbol in symbols:
+            sym_signals = merged_signals[merged_signals["symbol"] == symbol]
+            if sym_signals.empty:
+                continue
+            inst_id = _to_okx_inst_id(symbol)
+            raw = _resolve_v3_raw_data(symbol, inst_id, start, end)
+            raw = _merge_okx_aux_data(raw, inst_id, start, end)
+            sym_trades = simulate_signals_on_bars(sym_signals, raw, eparams)
+            if not sym_trades.empty:
+                sym_trades["symbol"] = symbol
+                all_trades.append(sym_trades)
+
+        trades = pd.concat(all_trades, ignore_index=True) if all_trades else pd.DataFrame()
 
     if not trades.empty:
         trades.to_csv(out_dir / f"{strategy_name}_trades.csv", index=False)

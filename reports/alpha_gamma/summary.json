@@ -1,0 +1,134 @@
+{
+  "alpha_funding_switch": {
+    "status": "UNKNOWN",
+    "summary": {
+      "strategy_name": "alpha_funding_switch",
+      "signals": 1356,
+      "symbols": 1
+    },
+    "metrics": {
+      "n_trades": 34,
+      "win_rate": 0.0882,
+      "ev_R": -0.5171,
+      "profit_factor": 0.068,
+      "max_drawdown_pct": 97.71,
+      "max_consec_losses": 16,
+      "max_consec_wins": 2,
+      "trades_per_day_per_symbol": 0.3696,
+      "avg_holding_bars": 11.94,
+      "best_trade_R": 1.1408,
+      "worst_trade_R": -1.534,
+      "by_symbol": {
+        "BTCUSDT": {
+          "n": 34,
+          "wr": 0.0882,
+          "ev_R": -0.5171
+        }
+      },
+      "by_hour_utc": {
+        "0": {
+          "n": 5,
+          "wr": 0.0,
+          "ev_R": -0.3735
+        },
+        "1": {
+          "n": 4,
+          "wr": 0.25,
+          "ev_R": -0.6727
+        },
+        "2": {
+          "n": 1,
+          "wr": 0.0,
+          "ev_R": -0.1369
+        },
+        "8": {
+          "n": 6,
+          "wr": 0.0,
+          "ev_R": -0.5596
+        },
+        "9": {
+          "n": 3,
+          "wr": 0.0,
+          "ev_R": -0.5158
+        },
+        "10": {
+          "n": 2,
+          "wr": 0.0,
+          "ev_R": -0.5805
+        },
+        "16": {
+          "n": 9,
+          "wr": 0.2222,
+          "ev_R": -0.4733
+        },
+        "17": {
+          "n": 2,
+          "wr": 0.0,
+          "ev_R": -0.8457
+        },
+        "18": {
+          "n": 2,
+          "wr": 0.0,
+          "ev_R": -0.4351
+        }
+      },
+      "exit_reason_breakdown": {
+        "TIME": 33,
+        "SL": 1,
+        "TP": 0
+      },
+      "decision": "ABORT"
+    }
+  },
+  "gamma_settlement_compression": {
+    "status": "UNKNOWN",
+    "summary": {
+      "strategy_name": "gamma_settlement_compression",
+      "signals": 87,
+      "symbols": 1
+    },
+    "metrics": {
+      "n_trades": 26,
+      "win_rate": 0.0385,
+      "ev_R": -0.6423,
+      "profit_factor": 0.0322,
+      "max_drawdown_pct": 96.91,
+      "max_consec_losses": 20,
+      "max_consec_wins": 1,
+      "trades_per_day_per_symbol": 0.2826,
+      "avg_holding_bars": 12.0,
+      "best_trade_R": 0.5548,
+      "worst_trade_R": -1.534,
+      "by_symbol": {
+        "BTCUSDT": {
+          "n": 26,
+          "wr": 0.0385,
+          "ev_R": -0.6423
+        }
+      },
+      "by_hour_utc": {
+        "7": {
+          "n": 10,
+          "wr": 0.0,
+          "ev_R": -0.57
+        },
+        "15": {
+          "n": 7,
+          "wr": 0.1429,
+          "ev_R": -0.6026
+        },
+        "23": {
+          "n": 9,
+          "wr": 0.0,
+          "ev_R": -0.7536
+        }
+      },
+      "exit_reason_breakdown": {
+        "TIME": 25,
+        "SL": 1,
+        "TP": 0
+      },
+      "decision": "ABORT"
+    }
+  }
+}
