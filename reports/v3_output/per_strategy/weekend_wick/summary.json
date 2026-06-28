@@ -1,23 +1,23 @@
 {
   "strategy_name": "weekend_wick",
   "n_trades": 142,
-  "win_rate": 0.9296,
-  "ev_R": 1.2113,
-  "profit_factor": 56.2137,
-  "max_drawdown_pct": 94.74,
-  "max_consec_losses": 1,
-  "max_consec_wins": 39,
+  "win_rate": 0.4507,
+  "ev_R": 0.0441,
+  "profit_factor": 1.0934,
+  "max_drawdown_pct": 75.34,
+  "max_consec_losses": 5,
+  "max_consec_wins": 6,
   "trades_per_day_per_symbol": 0.1443,
-  "avg_holding_bars": 0.0,
-  "best_trade_R": 3.5539,
-  "worst_trade_R": -1.1294,
-  "decision": "PASS",
+  "avg_holding_bars": 1.65,
+  "best_trade_R": 3.2176,
+  "worst_trade_R": -1.1306,
+  "decision": "ABORT",
   "exit_reason_breakdown": {
-    "TIME": 91,
-    "TP": 50,
-    "SL": 1
+    "TIME": 64,
+    "SL": 51,
+    "TP": 27
   },
   "fee_slippage_R_total": 17.5851,
   "funding_pnl_R_total": 0.0,
-  "price_pnl_R_total": 181.4765
+  "price_pnl_R_total": 15.7287
 }

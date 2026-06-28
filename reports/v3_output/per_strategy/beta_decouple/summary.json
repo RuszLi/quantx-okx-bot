@@ -1,22 +1,23 @@
 {
   "strategy_name": "beta_decouple",
-  "n_trades": 24,
-  "win_rate": 0.9583,
-  "ev_R": 0.6108,
-  "profit_factor": 82.5135,
-  "max_drawdown_pct": 18.49,
-  "max_consec_losses": 1,
-  "max_consec_wins": 12,
-  "trades_per_day_per_symbol": 0.0244,
-  "avg_holding_bars": 0.0,
+  "n_trades": 23,
+  "win_rate": 0.3478,
+  "ev_R": -0.1523,
+  "profit_factor": 0.3454,
+  "max_drawdown_pct": 25.53,
+  "max_consec_losses": 6,
+  "max_consec_wins": 3,
+  "trades_per_day_per_symbol": 0.0234,
+  "avg_holding_bars": 1.91,
   "best_trade_R": 0.9139,
-  "worst_trade_R": -0.1798,
-  "decision": "PASS",
+  "worst_trade_R": -1.0873,
+  "decision": "ABORT",
   "exit_reason_breakdown": {
-    "TIME": 17,
-    "TP": 7
+    "TIME": 19,
+    "SL": 3,
+    "TP": 1
   },
-  "fee_slippage_R_total": 2.08,
+  "fee_slippage_R_total": 1.9933,
   "funding_pnl_R_total": 0.0,
-  "price_pnl_R_total": 15.7797
+  "price_pnl_R_total": -2.4286
 }

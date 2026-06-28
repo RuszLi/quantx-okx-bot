@@ -1,17 +1,17 @@
 # V3 Strategy B — funding_extreme
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T09:03:24.999572+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-27T12:25:09.004395+00:00
 
 ## 1. 决策结论
 
 - **DECISION**: `ABORT`
 - **ROBUSTNESS**: `FAIL`
-- **n_trades**: 354
-- **win_rate**: 0.0282
-- **EV(R)**: -0.3401
-- **profit_factor**: 0.0062
-- **max_consec_losses**: 157
-- **max_drawdown_pct**: 85.93%
+- **n_trades**: 238
+- **win_rate**: 0.3992
+- **EV(R)**: -0.1434
+- **profit_factor**: 0.6131
+- **max_consec_losses**: 12
+- **max_drawdown_pct**: 88.71%
 
 ## 2. 数据来源与点时证据
 
@@ -27,9 +27,9 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: -97.6573
-- **fee_slippage_R_total**: 36.3683
-- **funding_pnl_R_total**: 0.0000
+- **price_pnl_R_total**: -23.3978
+- **fee_slippage_R_total**: 20.0873
+- **funding_pnl_R_total**: 0.0863
 
 ## 4. 执行模拟参数
 
@@ -37,13 +37,15 @@
 - fee_maker_per_side: 0.0002
 - slippage_per_side: 0.0003
 - initial_equity: $7.0
-- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)
+- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
 
 ## 5. exit_reason 分布
 
 | exit_reason | count |
 |:---|:---|
-| TIME | 354 |
+| TIME | 146 |
+| SL | 53 |
+| TP | 39 |
 
 ## 6. 分组表
 
@@ -55,7 +57,7 @@
 
 ## 7. 敏感性网格
 
-见 `sensitivity_grid.csv` (共 354 笔交易,3x3x3=27 cells)
+见 `sensitivity_grid.csv` (共 238 笔交易,3x3x3=27 cells)
 ROBUSTNESS 评级: `FAIL`
 
 ## 8. 文件清单

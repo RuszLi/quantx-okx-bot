@@ -478,9 +478,16 @@ def run_strategy_on_universe(
             signals = signals.copy()
             signals["symbol"] = symbol
 
+            exit_klines = klines_1m if run_cfg.is_event_driven else _resample_to_bar_freq(
+                klines_1m,
+                strategy.config.bar_freq,
+            )
+            if exit_klines.empty:
+                continue
+
             trades = simulate_exits(
                 signals=signals,
-                klines=klines_1m,
+                klines=exit_klines,
                 time_stop_bars=run_cfg.time_stop_bars,
                 bar_freq_td=bar_freq_td,
                 risk_R=run_cfg.risk_per_trade_R,

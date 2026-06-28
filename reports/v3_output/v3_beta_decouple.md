@@ -1,17 +1,17 @@
 # V3 Strategy C — beta_decouple
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T15:45:08.998709+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-27T12:25:11.949821+00:00
 
 ## 1. 决策结论
 
-- **DECISION**: `PASS`
-- **ROBUSTNESS**: `HIGH`
-- **n_trades**: 24
-- **win_rate**: 0.9583
-- **EV(R)**: 0.6108
-- **profit_factor**: 82.5135
-- **max_consec_losses**: 1
-- **max_drawdown_pct**: 18.49%
+- **DECISION**: `ABORT`
+- **ROBUSTNESS**: `FAIL`
+- **n_trades**: 23
+- **win_rate**: 0.3478
+- **EV(R)**: -0.1523
+- **profit_factor**: 0.3454
+- **max_consec_losses**: 6
+- **max_drawdown_pct**: 25.53%
 
 ## 2. 数据来源与点时证据
 
@@ -27,8 +27,8 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: 15.7797
-- **fee_slippage_R_total**: 2.0800
+- **price_pnl_R_total**: -2.4286
+- **fee_slippage_R_total**: 1.9933
 - **funding_pnl_R_total**: 0.0000
 
 ## 4. 执行模拟参数
@@ -43,8 +43,9 @@
 
 | exit_reason | count |
 |:---|:---|
-| TIME | 17 |
-| TP | 7 |
+| TIME | 19 |
+| SL | 3 |
+| TP | 1 |
 
 ## 6. 分组表
 
@@ -56,8 +57,8 @@
 
 ## 7. 敏感性网格
 
-见 `sensitivity_grid.csv` (共 24 笔交易,3x3x3=27 cells)
-ROBUSTNESS 评级: `HIGH`
+见 `sensitivity_grid.csv` (共 23 笔交易,3x3x3=27 cells)
+ROBUSTNESS 评级: `FAIL`
 
 ## 8. 文件清单
 

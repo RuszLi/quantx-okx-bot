@@ -1,6 +1,6 @@
 # V3 Strategy H — oi_velocity
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T09:04:18.238268+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-27T12:25:58.988103+00:00
 
 ## 1. 决策结论
 
@@ -37,7 +37,7 @@
 - fee_maker_per_side: 0.0002
 - slippage_per_side: 0.0003
 - initial_equity: $7.0
-- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)
+- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
 
 ## 5. exit_reason 分布
 

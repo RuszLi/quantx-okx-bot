@@ -1,17 +1,17 @@
 # V3 Strategy E — pre_funding_unwind
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T09:03:54.029556+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-27T12:25:40.414270+00:00
 
 ## 1. 决策结论
 
 - **DECISION**: `ABORT`
 - **ROBUSTNESS**: `FAIL`
 - **n_trades**: 60
-- **win_rate**: 0.2167
-- **EV(R)**: -0.1650
-- **profit_factor**: 0.1249
-- **max_consec_losses**: 8
-- **max_drawdown_pct**: 38.55%
+- **win_rate**: 0.3500
+- **EV(R)**: -0.1780
+- **profit_factor**: 0.4628
+- **max_consec_losses**: 5
+- **max_drawdown_pct**: 71.37%
 
 ## 2. 数据来源与点时证据
 
@@ -27,9 +27,9 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: -3.9250
-- **fee_slippage_R_total**: 9.5583
-- **funding_pnl_R_total**: 0.0000
+- **price_pnl_R_total**: -6.5176
+- **fee_slippage_R_total**: 7.7661
+- **funding_pnl_R_total**: 0.0223
 
 ## 4. 执行模拟参数
 
@@ -37,13 +37,15 @@
 - fee_maker_per_side: 0.0002
 - slippage_per_side: 0.0003
 - initial_equity: $7.0
-- 进出场默认 taker (保守估计;live 用 post-only + taker fallback)
+- 计费口径: 入场 maker (post_only 设计) + 出场 taker (SL/TIME 市价成交,TP 经 OCO 触发型限价单保守按 taker)
 
 ## 5. exit_reason 分布
 
 | exit_reason | count |
 |:---|:---|
-| TIME | 60 |
+| TIME | 47 |
+| SL | 8 |
+| TP | 5 |
 
 ## 6. 分组表
 

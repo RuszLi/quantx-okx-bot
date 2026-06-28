@@ -1,21 +1,23 @@
 {
   "strategy_name": "funding_extreme",
-  "n_trades": 354,
-  "win_rate": 0.0282,
-  "ev_R": -0.3401,
-  "profit_factor": 0.0062,
-  "max_drawdown_pct": 85.93,
-  "max_consec_losses": 157,
-  "max_consec_wins": 1,
-  "trades_per_day_per_symbol": 0.3598,
-  "avg_holding_bars": 0.0,
-  "best_trade_R": 0.1689,
-  "worst_trade_R": -1.0594,
+  "n_trades": 238,
+  "win_rate": 0.3992,
+  "ev_R": -0.1434,
+  "profit_factor": 0.6131,
+  "max_drawdown_pct": 88.71,
+  "max_consec_losses": 12,
+  "max_consec_wins": 7,
+  "trades_per_day_per_symbol": 0.2419,
+  "avg_holding_bars": 2.58,
+  "best_trade_R": 0.9596,
+  "worst_trade_R": -1.0894,
   "decision": "ABORT",
   "exit_reason_breakdown": {
-    "TIME": 354
+    "TIME": 146,
+    "SL": 53,
+    "TP": 39
   },
-  "fee_slippage_R_total": 36.3683,
-  "funding_pnl_R_total": 0.0,
-  "price_pnl_R_total": -97.6573
+  "fee_slippage_R_total": 20.0873,
+  "funding_pnl_R_total": 0.0863,
+  "price_pnl_R_total": -23.3978
 }

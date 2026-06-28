@@ -1,17 +1,17 @@
 # V3 Strategy D — weekend_wick
 
-> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-26T22:27:05.249129+00:00
+> §18.4 单 edge 证据闸门报告  |  生成时间: 2026-06-27T08:58:37.431008+00:00
 
 ## 1. 决策结论
 
-- **DECISION**: `PASS`
-- **ROBUSTNESS**: `HIGH`
+- **DECISION**: `ABORT`
+- **ROBUSTNESS**: `FAIL`
 - **n_trades**: 142
-- **win_rate**: 0.9296
-- **EV(R)**: 1.2113
-- **profit_factor**: 56.2137
-- **max_consec_losses**: 1
-- **max_drawdown_pct**: 94.74%
+- **win_rate**: 0.4507
+- **EV(R)**: 0.0441
+- **profit_factor**: 1.0934
+- **max_consec_losses**: 5
+- **max_drawdown_pct**: 75.34%
 
 ## 2. 数据来源与点时证据
 
@@ -27,7 +27,7 @@
 
 ## 3. PnL 分解 (per-trade R 单位)
 
-- **price_pnl_R_total**: 181.4765
+- **price_pnl_R_total**: 15.7287
 - **fee_slippage_R_total**: 17.5851
 - **funding_pnl_R_total**: 0.0000
 
@@ -43,9 +43,9 @@
 
 | exit_reason | count |
 |:---|:---|
-| TIME | 91 |
-| TP | 50 |
-| SL | 1 |
+| TIME | 64 |
+| SL | 51 |
+| TP | 27 |
 
 ## 6. 分组表
 
@@ -58,7 +58,7 @@
 ## 7. 敏感性网格
 
 见 `sensitivity_grid.csv` (共 142 笔交易,3x3x3=27 cells)
-ROBUSTNESS 评级: `HIGH`
+ROBUSTNESS 评级: `FAIL`
 
 ## 8. 文件清单
 

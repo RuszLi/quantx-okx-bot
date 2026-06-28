@@ -1,21 +1,23 @@
 {
   "strategy_name": "pre_funding_unwind",
   "n_trades": 60,
-  "win_rate": 0.2167,
-  "ev_R": -0.165,
-  "profit_factor": 0.1249,
-  "max_drawdown_pct": 38.55,
-  "max_consec_losses": 8,
-  "max_consec_wins": 2,
+  "win_rate": 0.35,
+  "ev_R": -0.178,
+  "profit_factor": 0.4628,
+  "max_drawdown_pct": 71.37,
+  "max_consec_losses": 5,
+  "max_consec_wins": 4,
   "trades_per_day_per_symbol": 0.061,
-  "avg_holding_bars": 0.0,
-  "best_trade_R": 0.4026,
-  "worst_trade_R": -0.6194,
+  "avg_holding_bars": 2.8,
+  "best_trade_R": 0.8894,
+  "worst_trade_R": -1.1306,
   "decision": "ABORT",
   "exit_reason_breakdown": {
-    "TIME": 60
+    "TIME": 47,
+    "SL": 8,
+    "TP": 5
   },
-  "fee_slippage_R_total": 9.5583,
-  "funding_pnl_R_total": 0.0,
-  "price_pnl_R_total": -3.925
+  "fee_slippage_R_total": 7.7661,
+  "funding_pnl_R_total": 0.0223,
+  "price_pnl_R_total": -6.5176
 }
