@@ -1,8 +1,60 @@
-# 架构文档规范
+# 架构文档索引
 
-> 本文件定义 `docs/architecture/` 目录下所有架构文档的命名规范、内容格式规范和写作指引。
+## 用途
+
+`docs/architecture/` 定义 `okx-bot` 稳定的跨领域技术基线。
+
+- `docs/design/` 负责应用层功能与业务设计。
+- `docs/architecture/` 负责横跨多个功能面的技术结构。
 
 ---
+
+## 建议阅读顺序
+
+1. [project-vision.md](./project-vision.md) — 产品与系统意图
+2. [strategy-and-factor-constraints.md](./strategy-and-factor-constraints.md) — 策略与因子的允许/禁止边界
+3. [okx-sdk-rules.md](./okx-sdk-rules.md) — OKX SDK 使用规范
+4. [sys-proxy-rules.md](./sys-proxy-rules.md) — 本地代理规范
+5. [python-env-rules.md](./python-env-rules.md) — Python 运行环境规范
+6. [2026-06-27-strategy-v3-execution-architecture.md](./2026-06-27-strategy-v3-execution-architecture.md) — V3 策略执行架构
+7. [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单
+8. 随项目演进，继续补充更具体的归属文档
+
+---
+
+## 归属文档规则
+
+- 一份文档只负责一个稳定主题
+- 解释当前的决策依据与约束，而非按时间顺序的演进历史
+- 当实现改变受支持的架构时，应在同一次变更中更新归属文档
+- 把被否决的方案与探索性记录迁到 `docs/analysis/`
+- 当技术规则是为支撑某个具体产品行为而存在时，请引用 `docs/design/` 下对应的应用层归属文档
+
+---
+
+## 优先级边界
+
+- `docs/design/` 归属应用行为与功能语义
+- `docs/architecture/` 归属技术结构与跨领域实现规则
+- 当问题涉及持久化或 schema 真值时，模型/schema 文件本身是权威来源
+
+---
+
+## 初始归属文档
+
+- [project-vision.md](./project-vision.md) — 产品与系统意图
+- [strategy-and-factor-constraints.md](./strategy-and-factor-constraints.md) — 策略与因子挖掘的允许/禁止约束
+- [okx-sdk-rules.md](./okx-sdk-rules.md) — OKX SDK 使用规范
+- [sys-proxy-rules.md](./sys-proxy-rules.md) — 本地代理规范
+- [python-env-rules.md](./python-env-rules.md) — Python 运行环境规范
+- [2026-06-27-strategy-v3-execution-architecture.md](./2026-06-27-strategy-v3-execution-architecture.md) — V3 策略执行架构
+- [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单
+
+---
+
+# 架构文档写作规范
+
+> 本节定义 `docs/architecture/` 目录下所有架构文档的命名规范、内容格式规范和写作指引。
 
 ## 1. 文件命名规范
 
@@ -34,10 +86,13 @@
 
 | 文件 | 类型 | 主题 |
 |:---|:---|:---|
+| `project-vision.md` | 愿景型 | 产品与系统意图 |
+| `strategy-and-factor-constraints.md` | 约束型 | 策略与因子挖掘约束 |
 | `okx-sdk-rules.md` | 规则型 | OKX SDK 使用规范 |
 | `sys-proxy-rules.md` | 规则型 | 本地代理规范 |
 | `python-env-rules.md` | 规则型 | Python 运行环境规范 |
-| `strategy-and-factor-constraints.md` | 约束型 | 策略与因子挖掘约束 |
+| `2026-06-27-strategy-v3-execution-architecture.md` | 架构型 | V3 策略执行架构 |
+| `backtest-exit-klines-alignment-checklist.md` | 检查型 | 回测退出 K 线对齐检查清单 |
 
 ---
 
@@ -157,7 +212,10 @@
 
 ## 相关文档
 
+- [project-vision.md](./project-vision.md) — 产品与系统意图
+- [strategy-and-factor-constraints.md](./strategy-and-factor-constraints.md) — 策略与因子约束吸引子
 - [okx-sdk-rules.md](./okx-sdk-rules.md) — OKX SDK 使用规范
 - [sys-proxy-rules.md](./sys-proxy-rules.md) — 本地代理规范
 - [python-env-rules.md](./python-env-rules.md) — Python 运行环境规范
-- [strategy-and-factor-constraints.md](./strategy-and-factor-constraints.md) — 策略与因子约束吸引子
+- [2026-06-27-strategy-v3-execution-architecture.md](./2026-06-27-strategy-v3-execution-architecture.md) — V3 策略执行架构
+- [backtest-exit-klines-alignment-checklist.md](./backtest-exit-klines-alignment-checklist.md) — 回测退出 K 线对齐检查清单

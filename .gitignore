@@ -11,3 +11,4 @@ opencode.json
 .codegraph/
 .vscode/
 .omo/run-continuation/
+node_modules/
