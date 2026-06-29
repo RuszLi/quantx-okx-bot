@@ -12,3 +12,4 @@ opencode.json
 .vscode/
 .omo/run-continuation/
 node_modules/
+reports/
